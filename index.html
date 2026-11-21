@@ -20,7 +20,7 @@
     --border: #3b527d;
     --ut-bg: #050507;
     --ut-line: #ffffff;
-    --ad-safe-space: 84px;
+    --ad-safe-space: 24px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -47,7 +47,7 @@
   }
   .pixel-font {
     font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
   }
 
   /* Colorful Lobby Header */
@@ -134,7 +134,7 @@
   main {
     flex: 1;
     padding: 12px;
-    padding-bottom: 132px;
+    padding-bottom: 84px;
     overflow-y: auto;
   }
   .tab-pane { display: none; }
@@ -288,18 +288,19 @@
     background: var(--ut-bg);
     color: var(--ut-line);
     justify-content: center;
+    align-items: flex-start;
     overflow-y: auto;
-    padding-bottom: var(--ad-safe-space);
+    -webkit-overflow-scrolling: touch;
   }
   .battle-screen.active { display: flex; }
   .battle-inner {
     width: 100%;
     max-width: 440px;
-    padding: 10px;
-    padding-bottom: 120px;
+    min-height: 100dvh;
+    padding: 8px 10px 24px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 7px;
     position: relative;
   }
 
@@ -387,18 +388,19 @@
   .ut-box {
     border: 2px solid var(--ut-line);
     background: #000;
-    padding: 9px 10px;
+    padding: 8px 10px;
     position: relative;
-    overflow: hidden;
+    flex-shrink: 0;
   }
   .boss-stage-area {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    min-height: 196px;
-    padding: 12px 10px;
+    gap: 6px;
+    min-height: 152px;
+    padding: 9px 10px;
+    overflow: hidden;
   }
   .boss-hp-block {
     width: 100%;
@@ -412,7 +414,7 @@
     align-items: center;
     font-size: 12px;
     font-weight: 800;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     gap: 8px;
   }
   .boss-speech {
@@ -420,12 +422,12 @@
     color: #000;
     font-weight: 800;
     font-size: 11px;
-    padding: 5px 10px;
+    padding: 4px 10px;
     border-radius: 8px;
     max-width: 94%;
     text-align: center;
     z-index: 3;
-    line-height: 1.35;
+    line-height: 1.3;
   }
 
   /* Shockwave, Barrier & Heal FX */
@@ -525,14 +527,14 @@
   .hp-bar-wrap {
     display: block;
     width: 100%;
-    height: 14px;
+    height: 13px;
     background: #27272a;
     border: 2px solid #ffffff;
     overflow: hidden;
   }
   .hp-bar-fill {
     display: block;
-    height: 14px;
+    height: 100%;
     width: 100%;
     transition: width 0.25s ease;
   }
@@ -558,35 +560,35 @@
   /* Boss Attack, Miss, Blocked & Hurt Animations */
   @keyframes bossLungeAttack {
     0% { transform: translate(0, 0) scale(1); }
-    25% { transform: translate(-8px, -16px) scale(1.15) rotate(-6deg); filter: drop-shadow(0 0 12px #ff1e42); }
-    52% { transform: translate(6px, 34px) scale(1.36) rotate(5deg); filter: drop-shadow(0 0 22px #ff0033); }
-    75% { transform: translate(-4px, 12px) scale(1.1) rotate(-3deg); filter: drop-shadow(0 0 14px #f97316); }
+    25% { transform: translate(-8px, -14px) scale(1.12) rotate(-5deg); filter: drop-shadow(0 0 12px #ff1e42); }
+    52% { transform: translate(6px, 24px) scale(1.26) rotate(4deg); filter: drop-shadow(0 0 22px #ff0033); }
+    75% { transform: translate(-4px, 10px) scale(1.08) rotate(-2deg); filter: drop-shadow(0 0 14px #f97316); }
     100% { transform: translate(0, 0) scale(1) rotate(0deg); filter: none; }
   }
   @keyframes bossLungeDeluxe {
     0% { transform: translate(0, 0) scale(1); }
-    20% { transform: translate(-14px, -22px) scale(1.25) rotate(-10deg); filter: drop-shadow(0 0 18px #fde047); }
-    48% { transform: translate(10px, 40px) scale(1.52) rotate(9deg); filter: drop-shadow(0 0 30px #ff0044); }
-    74% { transform: translate(-8px, 16px) scale(1.22) rotate(-6deg); filter: drop-shadow(0 0 22px #c084fc); }
+    20% { transform: translate(-12px, -16px) scale(1.18) rotate(-8deg); filter: drop-shadow(0 0 18px #fde047); }
+    48% { transform: translate(10px, 28px) scale(1.36) rotate(7deg); filter: drop-shadow(0 0 30px #ff0044); }
+    74% { transform: translate(-8px, 12px) scale(1.15) rotate(-5deg); filter: drop-shadow(0 0 22px #c084fc); }
     100% { transform: translate(0, 0) scale(1) rotate(0deg); filter: none; }
   }
   @keyframes bossWhiffMiss {
     0% { transform: translate(0, 0) scale(1); opacity: 1; }
-    35% { transform: translate(22px, 14px) scale(1.08) rotate(12deg); opacity: 0.65; }
-    70% { transform: translate(-10px, 6px) scale(0.98) rotate(-5deg); opacity: 0.85; }
+    35% { transform: translate(20px, 12px) scale(1.06) rotate(10deg); opacity: 0.65; }
+    70% { transform: translate(-10px, 5px) scale(0.98) rotate(-5deg); opacity: 0.85; }
     100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
   }
   @keyframes bossBlockedBounce {
-    0% { transform: translate(0, 26px) scale(1.22); filter: drop-shadow(0 0 16px #38bdf8); }
-    45% { transform: translate(0, -14px) scale(0.92); filter: drop-shadow(0 0 20px #7dd3fc); }
+    0% { transform: translate(0, 20px) scale(1.16); filter: drop-shadow(0 0 16px #38bdf8); }
+    45% { transform: translate(0, -12px) scale(0.94); filter: drop-shadow(0 0 20px #7dd3fc); }
     100% { transform: translate(0, 0) scale(1); filter: none; }
   }
   @keyframes bossHitHeavy {
     0%, 100% { transform: translate(0, 0) scale(1); opacity: 1; }
-    18% { transform: translate(-12px, -4px) scale(1.12); opacity: 0.25; filter: drop-shadow(0 0 16px #fde047); }
-    36% { transform: translate(12px, 4px) scale(0.94); opacity: 1; }
-    54% { transform: translate(-10px, 3px) scale(1.08); opacity: 0.3; }
-    72% { transform: translate(8px, -3px) scale(1.03); opacity: 1; }
+    18% { transform: translate(-10px, -3px) scale(1.08); opacity: 0.25; filter: drop-shadow(0 0 16px #fde047); }
+    36% { transform: translate(10px, 3px) scale(0.95); opacity: 1; }
+    54% { transform: translate(-8px, 2px) scale(1.05); opacity: 0.3; }
+    72% { transform: translate(7px, -2px) scale(1.02); opacity: 1; }
   }
   @keyframes bossHitMid {
     0%, 100% { transform: translateX(0); opacity: 1; }
@@ -608,28 +610,28 @@
   .boss-anim-hurt-low { animation: bossHitLow 0.28s ease; }
 
   .msg-window {
-    min-height: 46px;
+    min-height: 54px;
     font-size: 12px;
-    line-height: 1.4;
+    line-height: 1.42;
     white-space: pre-line;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   /* Lower Half Action Area: 4 Corner Selector vs Score Input Screen */
   .lower-half-panel {
-    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     gap: 8px;
-    min-height: 224px;
+    min-height: 184px;
   }
   .quad-grid {
-    flex: 1;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 10px;
-    min-height: 176px;
+    gap: 8px;
+    min-height: 164px;
     user-select: none;
     -webkit-user-select: none;
   }
@@ -879,7 +881,7 @@
 <div class="battle-screen" id="battleScreen">
   <div class="fx-flash-overlay" id="fxFlashOverlay"></div>
   <div class="battle-inner" id="battleInner">
-    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;flex-shrink:0;">
       <span class="pixel-font" id="battleStageLabel">STAGE 1</span>
       <span style="font-size:10px;color:#cbd5e1;">「逃げる」で記録破棄してロビーへ</span>
     </div>
@@ -960,7 +962,7 @@
 </div>
 
 <script>
-const STORAGE_KEY = "better_archery_rpg_20boss_v2";
+const STORAGE_KEY = "better_archery_rpg_20boss_v3";
 
 const CMD_INFO = {
   attack: { label: "攻撃" },
@@ -969,7 +971,7 @@ const CMD_INFO = {
   escape: { label: "逃げる" }
 };
 
-/* 20 Individual Bosses (Original names & lines preserved) */
+/* 20 Individual Bosses */
 const STAGES = [
   { stage: 1,  name: "フロギー・ドット",       quote: "「ケロ…3射合わせて20点くらいでいいよ」",         atkQuote: "「ケロロッ！激流スプラッシュ！」",       hp: 58,   atk: 7,   hint: "3射平均 約20点" },
   { stage: 2,  name: "ちびボーン・カチン",     quote: "「カチンコチン。外すと骨まで冷えるぜ。」",       atkQuote: "「ホネ嵐バスター！」",                 hp: 95,   atk: 11,  hint: "3射平均 約21点" },
@@ -1245,7 +1247,7 @@ function calcStats(profile) {
 }
 
 /* 20 Unique Undertale-style Boss SVGs */
-function renderBossSvg(stageNum, size = 80) {
+function renderBossSvg(stageNum, size = 72) {
   const s = ((stageNum - 1) % 20) + 1;
   const shapes = {
     1: `<ellipse cx="40" cy="48" rx="24" ry="16"/><circle cx="28" cy="28" r="7" fill="#000"/><circle cx="52" cy="28" r="7" fill="#000"/><circle cx="28" cy="28" r="2" fill="#fff"/><circle cx="52" cy="28" r="2" fill="#fff"/><path d="M28 52 Q40 59 52 52"/>`,
@@ -1463,7 +1465,7 @@ function startBattle() {
   };
 
   document.getElementById("battleStageLabel").textContent = `STAGE ${st.stage}`;
-  document.getElementById("battleBossSvg").innerHTML = renderBossSvg(st.stage, 84);
+  document.getElementById("battleBossSvg").innerHTML = renderBossSvg(st.stage, 72);
   document.getElementById("battleBossName").textContent = st.name;
   document.getElementById("battleBossSpeech").textContent = st.quote;
   document.getElementById("battlePlayerName").textContent = p.name;
@@ -1473,6 +1475,7 @@ function startBattle() {
   updateBattleHud();
   setBattleMsg(`* ${st.name} があらわれた！\n四隅の「攻撃・守る・回復・逃げる」から1つ選ぼう。`);
   document.getElementById("battleScreen").classList.add("active");
+  document.getElementById("battleScreen").scrollTop = 0;
 }
 
 function setBattleMsg(text) {
