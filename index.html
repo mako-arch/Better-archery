@@ -836,21 +836,21 @@
           <div style="font-size:11px;color:#67e8f9;font-weight:800;" id="stageBadge">STAGE 1 / 20</div>
           <div id="stageBossSvg"></div>
           <div style="font-weight:900;font-size:15px;color:#fef08a;" id="stageBossName">フロギー・ドット</div>
-          <div style="font-size:11px;color:#e2e8f0;font-style:italic;" id="stageBossQuote">「ケロ…3射合わせて20点くらいでいいよ」</div>
+          <div style="font-size:11px;color:#e2e8f0;font-style:italic;" id="stageBossQuote">「ケロ…3射合わせて18点出さないと厳しいぞ」</div>
         </div>
 
         <div class="stage-meta">
           <div class="meta-box">
-            <div class="meta-label">ボスHP（クリア目安×約3）</div>
-            <div class="meta-val" style="color:#fda4af;" id="stageBossHp">54</div>
+            <div class="meta-label">ボスHP（Lv補正込・最大12T）</div>
+            <div class="meta-val" style="color:#fda4af;" id="stageBossHp">68</div>
           </div>
           <div class="meta-box">
             <div class="meta-label">ボス基準攻撃力</div>
-            <div class="meta-val" style="color:#fde047;" id="stageBossAtk">4</div>
+            <div class="meta-val" style="color:#fde047;" id="stageBossAtk">14</div>
           </div>
           <div class="meta-box">
             <div class="meta-label">3射クリア目安</div>
-            <div class="meta-val" style="color:#67e8f9;" id="stageTargetHint">3射合計 約18点</div>
+            <div class="meta-val" style="color:#67e8f9;" id="stageTargetHint">3射合計 18点</div>
           </div>
           <div class="meta-box">
             <div class="meta-label">解放・クリア状態</div>
@@ -883,7 +883,8 @@
   <div class="battle-inner" id="battleInner">
     <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;flex-shrink:0;">
       <span class="pixel-font" id="battleStageLabel">STAGE 1</span>
-      <span style="font-size:10px;color:#cbd5e1;">「逃げる」で記録破棄してロビーへ</span>
+      <span class="pixel-font" style="color:#fde047;" id="battleTurnLabel">TURN 1 / 12</span>
+      <span style="font-size:10px;color:#cbd5e1;">「逃げる」で記録破棄</span>
     </div>
 
     <div class="ut-box boss-stage-area">
@@ -899,7 +900,7 @@
       <div class="boss-hp-block">
         <div class="boss-hp-header">
           <span id="battleBossName">フロギー・ドット</span>
-          <span id="battleBossHpText">54 / 54</span>
+          <span id="battleBossHpText">68 / 68</span>
         </div>
         <div class="hp-bar-wrap">
           <div class="hp-bar-fill boss-hp-fill" id="battleBossHpBar" style="width:100%;"></div>
@@ -916,7 +917,7 @@
           <span id="battlePlayerName">プレイヤー</span>
           <span id="battleDefBuff" style="font-size:10px;color:#7dd3fc;margin-left:6px;"></span>
         </span>
-        <span id="battlePlayerHpText">HP 120 / 120</span>
+        <span id="battlePlayerHpText">HP 50 / 50</span>
       </div>
       <div class="hp-bar-wrap">
         <div class="hp-bar-fill player-hp-fill" id="battlePlayerHpBar" style="width:100%;"></div>
@@ -962,7 +963,8 @@
 </div>
 
 <script>
-const STORAGE_KEY = "better_archery_rpg_20boss_v4";
+const STORAGE_KEY = "better_archery_rpg_20boss_v5";
+const MAX_TURNS = 12;
 
 const CMD_INFO = {
   attack: { label: "攻撃" },
@@ -971,30 +973,33 @@ const CMD_INFO = {
   escape: { label: "逃げる" }
 };
 
-/* 20 Individual Bosses:
-   HP = クリア目安(3射合計) × 約3回分
-   ATK = 弱めに調整（序盤3〜終盤22） */
+/*
+  20 Individual Bosses:
+  - targetSum: クリア目安となる1エンド(3射)の合計点。これより1点でも低いと削りきれない／耐えきれないシビア設計
+  - baseHp: Lv.1基準の敵HP（目安点数を約3.5〜4.2ターンで削りきる想定）
+  - atk: 1回の被弾でプレイヤーHPの約22〜32%を削る強さ（目安未満だと守る・回復との噛み合わせが必須）
+*/
 const STAGES = [
-  { stage: 1,  name: "フロギー・ドット",       quote: "「ケロ…3射合わせて18点くらいでいいよ」",         atkQuote: "「ケロロッ！激流スプラッシュ！」",       hp: 54,  atk: 3,  hint: "3射合計 約18点" },
-  { stage: 2,  name: "ちびボーン・カチン",     quote: "「カチンコチン。19点くらい出せるかな？」",       atkQuote: "「ホネ嵐バスター！」",                 hp: 57,  atk: 4,  hint: "3射合計 約19点" },
-  { stage: 3,  name: "まばたきキノコ",         quote: "「パチ…パチ…20点を目安に狙ってみてね」",       atkQuote: "「胞子メテオ！」",                     hp: 60,  atk: 4,  hint: "3射合計 約20点" },
-  { stage: 4,  name: "ワンコ・パトロール",     quote: "「ワン！21点ペースならバッチリだぜ！」",       atkQuote: "「ガルルルッ！ソニックタックル！」",   hp: 63,  atk: 5,  hint: "3射合計 約21点" },
-  { stage: 5,  name: "カセット・ゴースト",     quote: "「キュルキュル…21〜22点でリズムに乗ろう。」",   atkQuote: "「ノイズ衝撃波！」",                   hp: 65,  atk: 5,  hint: "3射合計 約21〜22点" },
-  { stage: 6,  name: "おしゃべりロウソク",     quote: "「ユラユラ…22点くらい集めると強いよ。」",       atkQuote: "「インフェルノ・ブレス！」",           hp: 68,  atk: 6,  hint: "3射合計 約22点" },
-  { stage: 7,  name: "パズル・ナイト",         quote: "「23点を目安に、着実にピースを削ろう。」",     atkQuote: "「メガブロック・クラッシュ！」",       hp: 70,  atk: 6,  hint: "3射合計 約23点" },
-  { stage: 8,  name: "うたたねタートル",       quote: "「フガァ…23〜24点くらいで甲羅を揺らそう。」",   atkQuote: "「シェル・トルネード！」",             hp: 72,  atk: 7,  hint: "3射合計 約23〜24点" },
-  { stage: 9,  name: "カオティック・スライム", quote: "「プルン！24点目安で形を崩していくのだ！」",   atkQuote: "「カオス弾幕バースト！」",             hp: 75,  atk: 7,  hint: "3射合計 約24点" },
-  { stage: 10, name: "ミスター・メトロノーム", quote: "「カチ、カチ…24〜25点のテンポで刻め。」",     atkQuote: "「ビート・オーバーロード！」",         hp: 75,  atk: 8,  hint: "3射合計 約24〜25点" },
-  { stage: 11, name: "ミラー・ドッペル",       quote: "「鏡の向こうも25点目安。落ち着いて撃て。」",   atkQuote: "「リバース・ブレイク！」",             hp: 78,  atk: 9,  hint: "3射合計 約25点" },
-  { stage: 12, name: "クロックワーク・オウル", quote: "「ホーッ…25〜26点で歯車を回そう。」",         atkQuote: "「ギア・カタストロフィ！」",           hp: 78,  atk: 10, hint: "3射合計 約25〜26点" },
-  { stage: 13, name: "ネオン・ファントム",     quote: "「ネオンの閃光の中でも26点を目安に！」",       atkQuote: "「ハイパー・レーザー！」",             hp: 80,  atk: 11, hint: "3射合計 約26点" },
-  { stage: 14, name: "グラビティ・ストーン",   quote: "「26〜27点目安で重力を跳ね返せ…」",             atkQuote: "「グラビティ・スーパーノヴァ！」",     hp: 81,  atk: 12, hint: "3射合計 約26〜27点" },
-  { stage: 15, name: "イグニス・コア",         quote: "「灼熱の核も27点ペースなら打ち砕ける！」",     atkQuote: "「マグマ・カタクリズム！」",           hp: 82,  atk: 13, hint: "3射合計 約27点" },
-  { stage: 16, name: "サイバー・センチネル",   quote: "「照準精度27〜28点目安でロックオン突破！」",   atkQuote: "「プラズマ・ロックオン砲！」",         hp: 84,  atk: 14, hint: "3射合計 約27〜28点" },
-  { stage: 17, name: "アストラル・ウィスプ",   quote: "「星屑の渦…28点目安で呼吸を整えよう。」",     atkQuote: "「スターダスト・インフィニティ！」",   hp: 84,  atk: 15, hint: "3射合計 約28点" },
-  { stage: 18, name: "ナイトメア・アービター", quote: "「悪夢の審判だ。28〜29点目安で切り抜けろ。」", atkQuote: "「ジャッジメント・アポカリプス！」",   hp: 87,  atk: 17, hint: "3射合計 約28〜29点" },
-  { stage: 19, name: "エターナル・ゼロ",       quote: "「29点目安で一射ずつ確実に積み上げよう。」",   atkQuote: "「ゼロ・オブリタレーション！」",       hp: 87,  atk: 19, hint: "3射合計 約29点" },
-  { stage: 20, name: "X-MARK X（真の王）",     quote: "「ここがXXの頂点。30点目安の射で刻め！」",     atkQuote: "「X-MARK・アルティメット！」",         hp: 90,  atk: 22, hint: "3射合計 約30点" }
+  { stage: 1,  name: "フロギー・ドット",       quote: "「ケロ…3射合計18点出さないと厳しいぞ」",         atkQuote: "「ケロロッ！激流スプラッシュ！」",       targetSum: 18, baseHp: 68,  atk: 14, hint: "3射合計 18点" },
+  { stage: 2,  name: "ちびボーン・カチン",     quote: "「カチンコチン。19点未満じゃ骨まで砕くぜ。」",   atkQuote: "「ホネ嵐バスター！」",                 targetSum: 19, baseHp: 72,  atk: 15, hint: "3射合計 19点" },
+  { stage: 3,  name: "まばたきキノコ",         quote: "「パチ…パチ…20点に届かないと眠らせるよ。」",   atkQuote: "「胞子メテオ！」",                     targetSum: 20, baseHp: 76,  atk: 16, hint: "3射合計 20点" },
+  { stage: 4,  name: "ワンコ・パトロール",     quote: "「ワン！21点出せないと噛みついちゃうぞ！」",     atkQuote: "「ガルルルッ！ソニックタックル！」",   targetSum: 21, baseHp: 80,  atk: 17, hint: "3射合計 21点" },
+  { stage: 5,  name: "カセット・ゴースト",     quote: "「キュルキュル…22点切ったら逆再生だ。」",     atkQuote: "「ノイズ衝撃波！」",                   targetSum: 22, baseHp: 84,  atk: 18, hint: "3射合計 22点" },
+  { stage: 6,  name: "おしゃべりロウソク",     quote: "「ユラユラ…22点じゃ炎は消せないよ。」",         atkQuote: "「インフェルノ・ブレス！」",           targetSum: 22, baseHp: 86,  atk: 18, hint: "3射合計 22点" },
+  { stage: 7,  name: "パズル・ナイト",         quote: "「23点に満たないと、ピースは噛み合わない。」",   atkQuote: "「メガブロック・クラッシュ！」",       targetSum: 23, baseHp: 90,  atk: 19, hint: "3射合計 23点" },
+  { stage: 8,  name: "うたたねタートル",       quote: "「フガァ…24点未満の矢は甲羅が弾くぞ。」",       atkQuote: "「シェル・トルネード！」",             targetSum: 24, baseHp: 94,  atk: 20, hint: "3射合計 24点" },
+  { stage: 9,  name: "カオティック・スライム", quote: "「プルン！24点じゃ形を保てないぞ！」",         atkQuote: "「カオス弾幕バースト！」",             targetSum: 24, baseHp: 96,  atk: 21, hint: "3射合計 24点" },
+  { stage: 10, name: "ミスター・メトロノーム", quote: "「カチ、カチ…25点未満はテンポ狂いだ。」",     atkQuote: "「ビート・オーバーロード！」",         targetSum: 25, baseHp: 100, atk: 22, hint: "3射合計 25点" },
+  { stage: 11, name: "ミラー・ドッペル",       quote: "「鏡の向こうは25点基準。1点でも甘いと負ける。」",atkQuote: "「リバース・ブレイク！」",             targetSum: 25, baseHp: 102, atk: 23, hint: "3射合計 25点" },
+  { stage: 12, name: "クロックワーク・オウル", quote: "「ホーッ…26点未満なら歯車は止まらない。」",   atkQuote: "「ギア・カタストロフィ！」",           targetSum: 26, baseHp: 106, atk: 24, hint: "3射合計 26点" },
+  { stage: 13, name: "ネオン・ファントム",     quote: "「ネオンの閃光の中で26点切ったら消えるよ。」", atkQuote: "「ハイパー・レーザー！」",             targetSum: 26, baseHp: 108, atk: 25, hint: "3射合計 26点" },
+  { stage: 14, name: "グラビティ・ストーン",   quote: "「27点未満では重力を押し返せない…」",           atkQuote: "「グラビティ・スーパーノヴァ！」",     targetSum: 27, baseHp: 112, atk: 26, hint: "3射合計 27点" },
+  { stage: 15, name: "イグニス・コア",         quote: "「灼熱の核を砕くには27点以上が必要だ！」",     atkQuote: "「マグマ・カタクリズム！」",           targetSum: 27, baseHp: 114, atk: 27, hint: "3射合計 27点" },
+  { stage: 16, name: "サイバー・センチネル",   quote: "「照準基準28点未満を検知。迎撃する。」",       atkQuote: "「プラズマ・ロックオン砲！」",         targetSum: 28, baseHp: 118, atk: 28, hint: "3射合計 28点" },
+  { stage: 17, name: "アストラル・ウィスプ",   quote: "「星屑の渦…28点切ったら飲み込まれるよ。」",   atkQuote: "「スターダスト・インフィニティ！」",   targetSum: 28, baseHp: 120, atk: 29, hint: "3射合計 28点" },
+  { stage: 18, name: "ナイトメア・アービター", quote: "「悪夢の審判だ。29点未満は裁きを受ける。」",   atkQuote: "「ジャッジメント・アポカリプス！」",   targetSum: 29, baseHp: 124, atk: 30, hint: "3射合計 29点" },
+  { stage: 19, name: "エターナル・ゼロ",       quote: "「29点に届かなければ、すべてを無に帰す。」",   atkQuote: "「ゼロ・オブリタレーション！」",       targetSum: 29, baseHp: 126, atk: 31, hint: "3射合計 29点" },
+  { stage: 20, name: "X-MARK X（真の王）",     quote: "「ここがXXの頂点。30点未満は許さない！」",     atkQuote: "「X-MARK・アルティメット！」",         targetSum: 30, baseHp: 132, atk: 33, hint: "3射合計 30点" }
 ];
 
 /* Dragon Quest-style March BGM & Separate SE Engine (Web Audio API) */
@@ -1242,9 +1247,31 @@ function updateAudioBtns() {
   seBtn.classList.toggle("off", !rootState.seOn);
 }
 
+/*
+  レベルが上がるほどターンが長くなる設計（ただし最大12ターン以内に収まる上限）：
+  - プレイヤーHP: 50 + (lv - 1) * 14
+  - 敵HP倍率: Lv.1で1.00、Lvが1上がるごとに +0.08（最大1.80倍）
+    ※ 目安点数を常に上回るターン数が必要になるよう、最低でも約3.8〜4.4ターン相当のHPを確保し、
+       Lvアップで5〜10ターン前後まで伸びつつ、12ターン上限を超えないよう調整
+*/
 function calcStats(profile) {
-  const hp = 120 + (profile.lv - 1) * 14;
-  return { hp };
+  const lv = Math.max(1, Number(profile.lv) || 1);
+  const hp = 50 + (lv - 1) * 14;
+  const lvHpMult = Math.min(1.8, 1 + (lv - 1) * 0.08);
+  const lvAtkMult = Math.min(1.65, 1 + (lv - 1) * 0.06);
+  return { hp, lvHpMult, lvAtkMult };
+}
+
+function getScaledBossHp(stageObj, profile) {
+  const { lvHpMult } = calcStats(profile);
+  const minRequiredHp = Math.ceil(stageObj.targetSum * 3.75);
+  const base = Math.max(stageObj.baseHp, minRequiredHp);
+  return Math.round(base * lvHpMult);
+}
+
+function getScaledBossAtk(stageObj, profile) {
+  const { lvAtkMult } = calcStats(profile);
+  return Math.max(1, Math.round(stageObj.atk * lvAtkMult));
 }
 
 /* 20 Unique Undertale-style Boss SVGs */
@@ -1326,13 +1353,16 @@ function selectStageDirect(val) {
 
 function renderStageCard(p) {
   const st = STAGES[p.selectedStage - 1] || STAGES[0];
+  const scaledHp = getScaledBossHp(st, p);
+  const scaledAtk = getScaledBossAtk(st, p);
+
   document.getElementById("stageSelect").value = st.stage;
   document.getElementById("stageBadge").textContent = `STAGE ${st.stage} / 20`;
   document.getElementById("stageBossSvg").innerHTML = renderBossSvg(st.stage, 80);
   document.getElementById("stageBossName").textContent = st.name;
   document.getElementById("stageBossQuote").textContent = st.quote;
-  document.getElementById("stageBossHp").textContent = st.hp;
-  document.getElementById("stageBossAtk").textContent = st.atk;
+  document.getElementById("stageBossHp").textContent = scaledHp;
+  document.getElementById("stageBossAtk").textContent = scaledAtk;
   document.getElementById("stageTargetHint").textContent = st.hint;
 
   const unlocked = st.stage <= p.unlockedStage;
@@ -1361,7 +1391,7 @@ function renderLogsTab(p) {
   el.innerHTML = p.logs.slice(0, 30).map((lg) => `
     <div class="log-item">
       <div>
-        <strong>Stage ${lg.stage}</strong>・${lg.result}
+        <strong>Stage ${lg.stage}</strong>・${lg.result} (${lg.turns || "-"}T)
         <div style="font-size:10px;color:var(--text-muted);">${lg.shots.join(" / ")}</div>
       </div>
       <div style="text-align:right;font-size:12px;">
@@ -1446,13 +1476,17 @@ function startBattle() {
   const st = STAGES[p.selectedStage - 1] || STAGES[0];
   if (st.stage > p.unlockedStage) return;
   const stats = calcStats(p);
+  const bossHp = getScaledBossHp(st, p);
+  const bossAtk = getScaledBossAtk(st, p);
 
   clearAllBattleFxClasses();
   Sound.startBgm();
   battle = {
     stageObj: st,
-    bossHp: st.hp,
-    bossMaxHp: st.hp,
+    turn: 1,
+    bossHp,
+    bossMaxHp: bossHp,
+    bossAtk,
     playerHp: stats.hp,
     playerMaxHp: stats.hp,
     fullGuardNext: false,
@@ -1473,7 +1507,7 @@ function startBattle() {
   clearShots();
   syncLowerHalfMode();
   updateBattleHud();
-  setBattleMsg(`* ${st.name} があらわれた！\n四隅の「攻撃・守る・回復・逃げる」から1つ選ぼう。`);
+  setBattleMsg(`* ${st.name} があらわれた！（目安: ${st.hint} / 最大${MAX_TURNS}ターン）\n四隅の「攻撃・守る・回復・逃げる」から1つ選ぼう。`);
   document.getElementById("battleScreen").classList.add("active");
   document.getElementById("battleScreen").scrollTop = 0;
 }
@@ -1655,14 +1689,15 @@ function triggerBossAttackFx(isDeluxe) {
   }
 }
 
+/* 目安より点数が低いと厳しい攻撃力（MISS率5%・乱数0.95〜1.20） */
 function rollEnemyAttack(baseAtk) {
-  const isMiss = Math.random() < 0.12;
+  const isMiss = Math.random() < 0.05;
   if (isMiss) {
     return { isMiss: true, dmg: 0, isDeluxe: false };
   }
-  const factor = 0.8 + Math.random() * 0.3;
+  const factor = 0.95 + Math.random() * 0.25;
   const dmg = Math.max(1, Math.round(baseAtk * factor));
-  const isDeluxe = dmg >= Math.ceil(baseAtk * 1.05);
+  const isDeluxe = dmg >= Math.ceil(baseAtk * 1.1);
   return { isMiss: false, dmg, isDeluxe };
 }
 
@@ -1676,31 +1711,32 @@ function confirmEnd() {
   battle.sessionShots.push(...shots);
 
   const sum = shots.reduce((acc, v) => acc + shotNumeric(v), 0);
+  const guardThreshold = Math.max(18, battle.stageObj.targetSum + 1);
 
   let actionLine = "";
   if (battle.cmd === "attack") {
     const dmg = sum;
     battle.bossHp = Math.max(0, battle.bossHp - dmg);
     triggerPlayerAttackFx(sum);
-    const tierLabel = sum >= 27 ? "【豪快一閃！】" : sum >= 18 ? "【鋭撃！】" : "";
+    const tierLabel = sum >= battle.stageObj.targetSum + 3 ? "【会心の一射！】" : sum >= battle.stageObj.targetSum ? "【目安達成！】" : "【目安未満…】";
     actionLine = `* ${tierLabel}${shots.join("・")}（合計${sum}点）で攻撃！${dmg}ダメージ！`;
   } else if (battle.cmd === "defend") {
-    if (sum >= 20) {
+    if (sum >= guardThreshold) {
       battle.fullGuardNext = true;
       battle.guardFailedTurn = false;
       Sound.guardReady();
-      actionLine = `* 合計${sum}点（20点以上）！完全バリア展開！次の敵攻撃を100％弾く！`;
+      actionLine = `* 合計${sum}点（${guardThreshold}点以上）！完全バリア展開！次の敵攻撃を100％弾く！`;
     } else {
       battle.fullGuardNext = false;
       battle.guardFailedTurn = true;
       triggerGuardFailFx();
-      actionLine = `* 合計${sum}点（20点未満）…防御失敗！！ガードが崩れた！`;
+      actionLine = `* 合計${sum}点（${guardThreshold}点未満）…防御失敗！！ガードが崩れた！`;
     }
   } else if (battle.cmd === "heal") {
-    const healAmt = sum * 3;
+    const healAmt = sum * 2;
     battle.playerHp = Math.min(battle.playerMaxHp, battle.playerHp + healAmt);
     triggerHealFx();
-    actionLine = `* 合計${sum}点×3で癒やしの光！HPが${healAmt}回復した！`;
+    actionLine = `* 合計${sum}点×2で癒やしの光！HPが${healAmt}回復した！`;
   }
 
   updateBattleHud();
@@ -1711,9 +1747,14 @@ function confirmEnd() {
     return;
   }
 
+  if (battle.turn >= MAX_TURNS) {
+    setTimeout(() => finishBattle("LOSE", "12ターン以内に倒しきれなかった…！"), 650);
+    return;
+  }
+
   setTimeout(() => {
     if (!battle) return;
-    const roll = rollEnemyAttack(battle.stageObj.atk);
+    const roll = rollEnemyAttack(battle.bossAtk);
     let finalDmg = 0;
     let guardNote = "";
 
@@ -1748,9 +1789,11 @@ function confirmEnd() {
     if (battle.playerHp <= 0) {
       setTimeout(() => finishBattle("LOSE"), 650);
     } else {
+      battle.turn += 1;
       battle.cmd = null;
       clearShots();
       battle.busy = false;
+      updateBattleHud();
       syncLowerHalfMode();
       renderShotSlots();
     }
@@ -1762,6 +1805,7 @@ function updateBattleHud() {
   const bossPct = Math.max(0, Math.min(100, (battle.bossHp / battle.bossMaxHp) * 100));
   const playerPct = Math.max(0, Math.min(100, (battle.playerHp / battle.playerMaxHp) * 100));
 
+  document.getElementById("battleTurnLabel").textContent = `TURN ${battle.turn} / ${MAX_TURNS}`;
   document.getElementById("battleBossHpText").textContent = `${battle.bossHp} / ${battle.bossMaxHp}`;
   document.getElementById("battleBossHpBar").style.width = `${bossPct}%`;
 
@@ -1771,12 +1815,13 @@ function updateBattleHud() {
   document.getElementById("battleDefBuff").textContent = battle.fullGuardNext ? "🛡 完全バリア展開中" : "";
 }
 
-function finishBattle(outcome) {
+function finishBattle(outcome, customReason = "") {
   const p = getProfile();
   const st = battle.stageObj;
   const totalPts = battle.sessionShots.reduce((a, b) => a + shotNumeric(b), 0);
   const ends = Math.max(1, Math.floor(battle.sessionShots.length / 3));
   const avg = (totalPts / ends).toFixed(1);
+  const turnsUsed = battle.turn;
 
   const won = outcome === "WIN";
   p.exp += won ? 50 + st.stage * 12 : 15;
@@ -1796,12 +1841,13 @@ function finishBattle(outcome) {
     }
   } else {
     Sound.lose();
-    nextMsg = `\n次のステージへ進むにはこのステージのクリアが必要です。`;
+    nextMsg = `\n${customReason || "次のステージへ進むにはこのステージのクリアが必要です。"}`;
   }
 
   p.logs.unshift({
     stage: st.stage,
     result: outcome,
+    turns: turnsUsed,
     shots: battle.sessionShots,
     total: totalPts,
     avg
@@ -1813,7 +1859,7 @@ function finishBattle(outcome) {
   battle = null;
   document.getElementById("battleScreen").classList.remove("active");
   refreshAll();
-  alert((won ? `Stage ${st.stage} 勝利！` : `Stage ${st.stage} 敗北…`) + nextMsg);
+  alert((won ? `Stage ${st.stage} 勝利！（${turnsUsed}ターン）` : `Stage ${st.stage} 敗北…（${turnsUsed}ターン）`) + nextMsg);
 }
 
 /* Save Slots & Name Management */
