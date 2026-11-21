@@ -841,16 +841,16 @@
 
         <div class="stage-meta">
           <div class="meta-box">
-            <div class="meta-label">ボスHP</div>
-            <div class="meta-val" style="color:#fda4af;" id="stageBossHp">58</div>
+            <div class="meta-label">ボスHP（クリア目安×約3）</div>
+            <div class="meta-val" style="color:#fda4af;" id="stageBossHp">54</div>
           </div>
           <div class="meta-box">
             <div class="meta-label">ボス基準攻撃力</div>
-            <div class="meta-val" style="color:#fde047;" id="stageBossAtk">7</div>
+            <div class="meta-val" style="color:#fde047;" id="stageBossAtk">4</div>
           </div>
           <div class="meta-box">
-            <div class="meta-label">クリア目安</div>
-            <div class="meta-val" style="color:#67e8f9;" id="stageTargetHint">3射平均 約20点</div>
+            <div class="meta-label">3射クリア目安</div>
+            <div class="meta-val" style="color:#67e8f9;" id="stageTargetHint">3射合計 約18点</div>
           </div>
           <div class="meta-box">
             <div class="meta-label">解放・クリア状態</div>
@@ -899,7 +899,7 @@
       <div class="boss-hp-block">
         <div class="boss-hp-header">
           <span id="battleBossName">フロギー・ドット</span>
-          <span id="battleBossHpText">58 / 58</span>
+          <span id="battleBossHpText">54 / 54</span>
         </div>
         <div class="hp-bar-wrap">
           <div class="hp-bar-fill boss-hp-fill" id="battleBossHpBar" style="width:100%;"></div>
@@ -962,7 +962,7 @@
 </div>
 
 <script>
-const STORAGE_KEY = "better_archery_rpg_20boss_v3";
+const STORAGE_KEY = "better_archery_rpg_20boss_v4";
 
 const CMD_INFO = {
   attack: { label: "攻撃" },
@@ -971,28 +971,30 @@ const CMD_INFO = {
   escape: { label: "逃げる" }
 };
 
-/* 20 Individual Bosses */
+/* 20 Individual Bosses:
+   HP = クリア目安(3射合計) × 約3回分
+   ATK = 弱めに調整（序盤3〜終盤22） */
 const STAGES = [
-  { stage: 1,  name: "フロギー・ドット",       quote: "「ケロ…3射合わせて20点くらいでいいよ」",         atkQuote: "「ケロロッ！激流スプラッシュ！」",       hp: 58,   atk: 7,   hint: "3射平均 約20点" },
-  { stage: 2,  name: "ちびボーン・カチン",     quote: "「カチンコチン。外すと骨まで冷えるぜ。」",       atkQuote: "「ホネ嵐バスター！」",                 hp: 95,   atk: 11,  hint: "3射平均 約21点" },
-  { stage: 3,  name: "まばたきキノコ",         quote: "「パチ…パチ…君の目、疲れてない？」",           atkQuote: "「胞子メテオ！」",                     hp: 145,  atk: 15,  hint: "3射平均 約22点" },
-  { stage: 4,  name: "ワンコ・パトロール",     quote: "「ワン！的のど真ん中、ちゃんと見てる？」",     atkQuote: "「ガルルルッ！ソニックタックル！」",   hp: 210,  atk: 20,  hint: "3射平均 約23点" },
-  { stage: 5,  name: "カセット・ゴースト",     quote: "「キュルキュル…リズムが狂うと逆再生だ。」",     atkQuote: "「ノイズ衝撃波！」",                   hp: 295,  atk: 26,  hint: "3射平均 約24点" },
-  { stage: 6,  name: "おしゃべりロウソク",     quote: "「ユラユラ…集中しないと火が消えるよ。」",       atkQuote: "「インフェルノ・ブレス！」",           hp: 395,  atk: 33,  hint: "3射平均 約25点" },
-  { stage: 7,  name: "パズル・ナイト",         quote: "「ピースは揃ったか？それともバラバラか？」",     atkQuote: "「メガブロック・クラッシュ！」",       hp: 515,  atk: 41,  hint: "3射平均 約25〜26点" },
-  { stage: 8,  name: "うたたねタートル",       quote: "「フガァ…おっと、甲羅は硬いんだぞ。」",         atkQuote: "「シェル・トルネード！」",             hp: 660,  atk: 50,  hint: "3射平均 約26点" },
-  { stage: 9,  name: "カオティック・スライム", quote: "「プルン！形が変わっても狙いは変えるな。」",     atkQuote: "「カオス弾幕バースト！」",             hp: 830,  atk: 60,  hint: "3射平均 約27点" },
-  { stage: 10, name: "ミスター・メトロノーム", quote: "「カチ、カチ、カチ…一定のテンポを刻め。」",     atkQuote: "「ビート・オーバーロード！」",         hp: 1030, atk: 72,  hint: "3射平均 約27〜28点" },
-  { stage: 11, name: "ミラー・ドッペル",       quote: "「鏡の中のもう一人の自分、撃ち抜けるか？」",   atkQuote: "「リバース・ブレイク！」",             hp: 1265, atk: 85,  hint: "3射平均 約28点" },
-  { stage: 12, name: "クロックワーク・オウル", quote: "「ホーッ…歯車が噛み合わなければ落ちる。」",     atkQuote: "「ギア・カタストロフィ！」",           hp: 1540, atk: 100, hint: "3射平均 約28〜29点" },
-  { stage: 13, name: "ネオン・ファントム",     quote: "「ネオンの光に目がくらむと、9点すら遠い。」",   atkQuote: "「ハイパー・レーザー！」",             hp: 1860, atk: 117, hint: "3射平均 約29点" },
-  { stage: 14, name: "グラビティ・ストーン",   quote: "「重力が君の引き手を重くする…」",               atkQuote: "「グラビティ・スーパーノヴァ！」",     hp: 2230, atk: 136, hint: "10点・X率 80%目安" },
-  { stage: 15, name: "イグニス・コア",         quote: "「灼熱の核が唸る！中途半端な矢は弾かれる！」", atkQuote: "「マグマ・カタクリズム！」",           hp: 2660, atk: 158, hint: "10点・X率 85%目安" },
-  { stage: 16, name: "サイバー・センチネル",   quote: "「照準誤差を検知。10点以外は許容しない。」",   atkQuote: "「プラズマ・ロックオン砲！」",         hp: 3150, atk: 182, hint: "10点・X率 88%目安" },
-  { stage: 17, name: "アストラル・ウィスプ",   quote: "「星屑の渦…呼吸とリリースを完全に同期せよ。」", atkQuote: "「スターダスト・インフィニティ！」",   hp: 3710, atk: 210, hint: "10点・X率 90%目安" },
-  { stage: 18, name: "ナイトメア・アービター", quote: "「悪夢の審判だ。95%の10点、見せてもらおう。」", atkQuote: "「ジャッジメント・アポカリプス！」",   hp: 4350, atk: 242, hint: "10点・X率 95%目安" },
-  { stage: 19, name: "エターナル・ゼロ",       quote: "「すべてを無に帰す力。一射も緩むな。」",       atkQuote: "「ゼロ・オブリタレーション！」",       hp: 5080, atk: 278, hint: "10点・X率 95%目安" },
-  { stage: 20, name: "X-MARK X（真の王）",     quote: "「ここがXXの頂点。95%以上の10点・Xで刻め！」", atkQuote: "「X-MARK・アルティメット！」",         hp: 5900, atk: 320, hint: "10点・X率 95%以上必須" }
+  { stage: 1,  name: "フロギー・ドット",       quote: "「ケロ…3射合わせて18点くらいでいいよ」",         atkQuote: "「ケロロッ！激流スプラッシュ！」",       hp: 54,  atk: 3,  hint: "3射合計 約18点" },
+  { stage: 2,  name: "ちびボーン・カチン",     quote: "「カチンコチン。19点くらい出せるかな？」",       atkQuote: "「ホネ嵐バスター！」",                 hp: 57,  atk: 4,  hint: "3射合計 約19点" },
+  { stage: 3,  name: "まばたきキノコ",         quote: "「パチ…パチ…20点を目安に狙ってみてね」",       atkQuote: "「胞子メテオ！」",                     hp: 60,  atk: 4,  hint: "3射合計 約20点" },
+  { stage: 4,  name: "ワンコ・パトロール",     quote: "「ワン！21点ペースならバッチリだぜ！」",       atkQuote: "「ガルルルッ！ソニックタックル！」",   hp: 63,  atk: 5,  hint: "3射合計 約21点" },
+  { stage: 5,  name: "カセット・ゴースト",     quote: "「キュルキュル…21〜22点でリズムに乗ろう。」",   atkQuote: "「ノイズ衝撃波！」",                   hp: 65,  atk: 5,  hint: "3射合計 約21〜22点" },
+  { stage: 6,  name: "おしゃべりロウソク",     quote: "「ユラユラ…22点くらい集めると強いよ。」",       atkQuote: "「インフェルノ・ブレス！」",           hp: 68,  atk: 6,  hint: "3射合計 約22点" },
+  { stage: 7,  name: "パズル・ナイト",         quote: "「23点を目安に、着実にピースを削ろう。」",     atkQuote: "「メガブロック・クラッシュ！」",       hp: 70,  atk: 6,  hint: "3射合計 約23点" },
+  { stage: 8,  name: "うたたねタートル",       quote: "「フガァ…23〜24点くらいで甲羅を揺らそう。」",   atkQuote: "「シェル・トルネード！」",             hp: 72,  atk: 7,  hint: "3射合計 約23〜24点" },
+  { stage: 9,  name: "カオティック・スライム", quote: "「プルン！24点目安で形を崩していくのだ！」",   atkQuote: "「カオス弾幕バースト！」",             hp: 75,  atk: 7,  hint: "3射合計 約24点" },
+  { stage: 10, name: "ミスター・メトロノーム", quote: "「カチ、カチ…24〜25点のテンポで刻め。」",     atkQuote: "「ビート・オーバーロード！」",         hp: 75,  atk: 8,  hint: "3射合計 約24〜25点" },
+  { stage: 11, name: "ミラー・ドッペル",       quote: "「鏡の向こうも25点目安。落ち着いて撃て。」",   atkQuote: "「リバース・ブレイク！」",             hp: 78,  atk: 9,  hint: "3射合計 約25点" },
+  { stage: 12, name: "クロックワーク・オウル", quote: "「ホーッ…25〜26点で歯車を回そう。」",         atkQuote: "「ギア・カタストロフィ！」",           hp: 78,  atk: 10, hint: "3射合計 約25〜26点" },
+  { stage: 13, name: "ネオン・ファントム",     quote: "「ネオンの閃光の中でも26点を目安に！」",       atkQuote: "「ハイパー・レーザー！」",             hp: 80,  atk: 11, hint: "3射合計 約26点" },
+  { stage: 14, name: "グラビティ・ストーン",   quote: "「26〜27点目安で重力を跳ね返せ…」",             atkQuote: "「グラビティ・スーパーノヴァ！」",     hp: 81,  atk: 12, hint: "3射合計 約26〜27点" },
+  { stage: 15, name: "イグニス・コア",         quote: "「灼熱の核も27点ペースなら打ち砕ける！」",     atkQuote: "「マグマ・カタクリズム！」",           hp: 82,  atk: 13, hint: "3射合計 約27点" },
+  { stage: 16, name: "サイバー・センチネル",   quote: "「照準精度27〜28点目安でロックオン突破！」",   atkQuote: "「プラズマ・ロックオン砲！」",         hp: 84,  atk: 14, hint: "3射合計 約27〜28点" },
+  { stage: 17, name: "アストラル・ウィスプ",   quote: "「星屑の渦…28点目安で呼吸を整えよう。」",     atkQuote: "「スターダスト・インフィニティ！」",   hp: 84,  atk: 15, hint: "3射合計 約28点" },
+  { stage: 18, name: "ナイトメア・アービター", quote: "「悪夢の審判だ。28〜29点目安で切り抜けろ。」", atkQuote: "「ジャッジメント・アポカリプス！」",   hp: 87,  atk: 17, hint: "3射合計 約28〜29点" },
+  { stage: 19, name: "エターナル・ゼロ",       quote: "「29点目安で一射ずつ確実に積み上げよう。」",   atkQuote: "「ゼロ・オブリタレーション！」",       hp: 87,  atk: 19, hint: "3射合計 約29点" },
+  { stage: 20, name: "X-MARK X（真の王）",     quote: "「ここがXXの頂点。30点目安の射で刻め！」",     atkQuote: "「X-MARK・アルティメット！」",         hp: 90,  atk: 22, hint: "3射合計 約30点" }
 ];
 
 /* Dragon Quest-style March BGM & Separate SE Engine (Web Audio API) */
@@ -1242,8 +1244,7 @@ function updateAudioBtns() {
 
 function calcStats(profile) {
   const hp = 120 + (profile.lv - 1) * 14;
-  const atk = 5 + (profile.lv - 1) * 4;
-  return { hp, atk };
+  return { hp };
 }
 
 /* 20 Unique Undertale-style Boss SVGs */
@@ -1454,7 +1455,6 @@ function startBattle() {
     bossMaxHp: st.hp,
     playerHp: stats.hp,
     playerMaxHp: stats.hp,
-    atk: stats.atk,
     fullGuardNext: false,
     guardFailedTurn: false,
     cmd: null,
@@ -1656,13 +1656,13 @@ function triggerBossAttackFx(isDeluxe) {
 }
 
 function rollEnemyAttack(baseAtk) {
-  const isMiss = Math.random() < 0.10;
+  const isMiss = Math.random() < 0.12;
   if (isMiss) {
     return { isMiss: true, dmg: 0, isDeluxe: false };
   }
-  const factor = 0.85 + Math.random() * 0.35;
+  const factor = 0.8 + Math.random() * 0.3;
   const dmg = Math.max(1, Math.round(baseAtk * factor));
-  const isDeluxe = dmg >= Math.ceil(baseAtk * 1.08);
+  const isDeluxe = dmg >= Math.ceil(baseAtk * 1.05);
   return { isMiss: false, dmg, isDeluxe };
 }
 
@@ -1679,11 +1679,11 @@ function confirmEnd() {
 
   let actionLine = "";
   if (battle.cmd === "attack") {
-    const dmg = sum + battle.atk;
+    const dmg = sum;
     battle.bossHp = Math.max(0, battle.bossHp - dmg);
     triggerPlayerAttackFx(sum);
     const tierLabel = sum >= 27 ? "【豪快一閃！】" : sum >= 18 ? "【鋭撃！】" : "";
-    actionLine = `* ${tierLabel}${shots.join("・")}(計${sum})で攻撃！${dmg}ダメージ！`;
+    actionLine = `* ${tierLabel}${shots.join("・")}（合計${sum}点）で攻撃！${dmg}ダメージ！`;
   } else if (battle.cmd === "defend") {
     if (sum >= 20) {
       battle.fullGuardNext = true;
