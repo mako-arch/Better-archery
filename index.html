@@ -314,15 +314,16 @@
     66% { transform: translate(-6px, 4px) rotate(-0.5deg); }
     80% { transform: translate(6px, -3px) rotate(0.5deg); }
   }
-  @keyframes screenShakeUltra {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    10% { transform: translate(-14px, 9px) rotate(-1.8deg); }
-    20% { transform: translate(14px, -9px) rotate(1.8deg); }
-    30% { transform: translate(-12px, -8px) rotate(-1.4deg); }
-    40% { transform: translate(13px, 8px) rotate(1.5deg); }
-    55% { transform: translate(-10px, 6px) rotate(-1.1deg); }
-    70% { transform: translate(10px, -5px) rotate(1deg); }
-    85% { transform: translate(-5px, 3px) rotate(-0.5deg); }
+  @keyframes screenShakeChargeFinisher {
+    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    8% { transform: translate(-16px, 11px) rotate(-2.4deg) scale(1.03); }
+    16% { transform: translate(16px, -11px) rotate(2.4deg) scale(1.03); }
+    25% { transform: translate(-15px, -10px) rotate(-2deg) scale(1.02); }
+    34% { transform: translate(15px, 10px) rotate(2deg) scale(1.02); }
+    45% { transform: translate(-13px, 8px) rotate(-1.6deg) scale(1.01); }
+    58% { transform: translate(12px, -7px) rotate(1.5deg) scale(1.01); }
+    72% { transform: translate(-9px, 5px) rotate(-1deg); }
+    86% { transform: translate(7px, -4px) rotate(0.7deg); }
   }
   @keyframes screenShakeMid {
     0%, 100% { transform: translate(0, 0); }
@@ -335,10 +336,15 @@
     30% { transform: translate(-3px, 2px); }
     65% { transform: translate(3px, -2px); }
   }
-  .shake-ultra { animation: screenShakeUltra 0.68s ease-out; }
+  @keyframes chargePulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px #f59e0b); }
+    50% { transform: scale(1.14); filter: drop-shadow(0 0 24px #ef4444); }
+  }
+  .shake-charge-finisher { animation: screenShakeChargeFinisher 0.85s cubic-bezier(0.22, 1, 0.36, 1); }
   .shake-heavy { animation: screenShakeHeavy 0.58s ease-out; }
   .shake-mid { animation: screenShakeMid 0.38s ease-out; }
   .shake-light { animation: screenShakeLight 0.25s ease-out; }
+  .boss-charging { animation: chargePulse 0.8s infinite ease-in-out; }
 
   .fx-flash-overlay {
     pointer-events: none;
@@ -352,9 +358,10 @@
     50% { opacity: 0.45; background: radial-gradient(circle, rgba(255,140,0,0.75) 0%, rgba(220,38,38,0.5) 70%, rgba(0,0,0,0.6) 100%); }
     100% { opacity: 0; }
   }
-  @keyframes flashEnemyDeluxe {
-    0% { opacity: 0.94; background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,20,80,0.9) 35%, rgba(147,51,234,0.75) 70%, rgba(0,0,0,0.92) 100%); }
-    45% { opacity: 0.7; background: radial-gradient(circle, rgba(251,191,36,0.9) 0%, rgba(225,29,72,0.8) 60%, rgba(0,0,0,0.75) 100%); }
+  @keyframes flashChargeFinisher {
+    0% { opacity: 1; background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(254,240,138,0.95) 25%, rgba(244,63,94,0.92) 58%, rgba(88,28,135,0.88) 100%); }
+    35% { opacity: 0.88; background: radial-gradient(circle, rgba(251,191,36,0.95) 0%, rgba(225,29,72,0.92) 48%, rgba(15,23,42,0.88) 100%); }
+    70% { opacity: 0.52; background: radial-gradient(circle, rgba(244,63,94,0.75) 0%, rgba(147,51,234,0.55) 70%, transparent 100%); }
     100% { opacity: 0; }
   }
   @keyframes flashCritGold {
@@ -378,7 +385,7 @@
     100% { opacity: 0; }
   }
   .flash-enemy { animation: flashEnemyBurst 0.58s ease-out; }
-  .flash-enemy-deluxe { animation: flashEnemyDeluxe 0.68s ease-out; }
+  .flash-charge-finisher { animation: flashChargeFinisher 0.88s ease-out; }
   .flash-crit { animation: flashCritGold 0.52s ease-out; }
   .flash-mid { animation: flashMidCyan 0.35s ease-out; }
   .flash-guard-fail { animation: flashGuardFail 0.42s ease-out; }
@@ -429,8 +436,13 @@
     z-index: 3;
     line-height: 1.3;
   }
+  .boss-speech.charge-alert {
+    background: #fef08a;
+    color: #991b1b;
+    border: 2px solid #ef4444;
+  }
 
-  /* Shockwave, Barrier & Heal FX */
+  /* Shockwave, Finisher Beams, Barrier & Heal FX */
   .shockwave-ring {
     pointer-events: none;
     position: absolute;
@@ -447,15 +459,55 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    border: 3px dashed #fde047;
+    border: 4px solid #fde047;
+    box-shadow: 0 0 18px #f59e0b;
     opacity: 0;
     z-index: 4;
   }
   @keyframes shockwaveExpand {
     0% { transform: scale(0.35); opacity: 1; border-width: 6px; }
-    100% { transform: scale(3.4); opacity: 0; border-width: 1px; }
+    100% { transform: scale(3.5); opacity: 0; border-width: 1px; }
+  }
+  @keyframes shockwaveExpandReverse {
+    0% { transform: scale(2.8); opacity: 0.9; border-width: 2px; }
+    60% { transform: scale(0.9); opacity: 1; border-width: 6px; }
+    100% { transform: scale(3.6); opacity: 0; border-width: 1px; }
   }
   .shockwave-active { animation: shockwaveExpand 0.62s cubic-bezier(0.16, 1, 0.3, 1); }
+  .shockwave-finisher-inner { animation: shockwaveExpandReverse 0.82s cubic-bezier(0.16, 1, 0.3, 1); }
+
+  .finisher-beam-a,
+  .finisher-beam-b {
+    pointer-events: none;
+    position: absolute;
+    width: 190px;
+    height: 8px;
+    border-radius: 999px;
+    opacity: 0;
+    z-index: 5;
+  }
+  .finisher-beam-a {
+    background: linear-gradient(90deg, transparent, #fde047, #f43f5e, #fff, transparent);
+    box-shadow: 0 0 22px #fde047, 0 0 36px #f43f5e;
+  }
+  .finisher-beam-b {
+    background: linear-gradient(90deg, transparent, #c084fc, #f43f5e, #fde047, transparent);
+    box-shadow: 0 0 22px #c084fc, 0 0 34px #f43f5e;
+  }
+  @keyframes beamStrikeA {
+    0% { opacity: 0; transform: rotate(-34deg) scaleX(0.15); }
+    25% { opacity: 1; transform: rotate(-34deg) scaleX(1.35); }
+    65% { opacity: 1; transform: rotate(-30deg) scaleX(1.55); }
+    100% { opacity: 0; transform: rotate(-28deg) scaleX(1.75); }
+  }
+  @keyframes beamStrikeB {
+    0% { opacity: 0; transform: rotate(34deg) scaleX(0.15); }
+    25% { opacity: 1; transform: rotate(34deg) scaleX(1.35); }
+    65% { opacity: 1; transform: rotate(30deg) scaleX(1.55); }
+    100% { opacity: 0; transform: rotate(28deg) scaleX(1.75); }
+  }
+  .finisher-beam-a-active { animation: beamStrikeA 0.78s ease-out; }
+  .finisher-beam-b-active { animation: beamStrikeB 0.78s ease-out; }
 
   .barrier-shield-ring {
     pointer-events: none;
@@ -565,11 +617,12 @@
     75% { transform: translate(-4px, 10px) scale(1.08) rotate(-2deg); filter: drop-shadow(0 0 14px #f97316); }
     100% { transform: translate(0, 0) scale(1) rotate(0deg); filter: none; }
   }
-  @keyframes bossLungeDeluxe {
-    0% { transform: translate(0, 0) scale(1); }
-    20% { transform: translate(-12px, -16px) scale(1.18) rotate(-8deg); filter: drop-shadow(0 0 18px #fde047); }
-    48% { transform: translate(10px, 28px) scale(1.36) rotate(7deg); filter: drop-shadow(0 0 30px #ff0044); }
-    74% { transform: translate(-8px, 12px) scale(1.15) rotate(-5deg); filter: drop-shadow(0 0 22px #c084fc); }
+  @keyframes bossChargeFinisherLunge {
+    0% { transform: translate(0, -10px) scale(1.15); filter: drop-shadow(0 0 24px #fde047); }
+    18% { transform: translate(-18px, -22px) scale(1.28) rotate(-12deg); filter: drop-shadow(0 0 32px #ff0044); }
+    42% { transform: translate(14px, 34px) scale(1.48) rotate(10deg); filter: drop-shadow(0 0 40px #fde047); }
+    64% { transform: translate(-12px, 18px) scale(1.26) rotate(-8deg); filter: drop-shadow(0 0 32px #c084fc); }
+    82% { transform: translate(8px, 6px) scale(1.12) rotate(4deg); filter: drop-shadow(0 0 20px #f43f5e); }
     100% { transform: translate(0, 0) scale(1) rotate(0deg); filter: none; }
   }
   @keyframes bossWhiffMiss {
@@ -602,7 +655,7 @@
     70% { transform: translateX(4px); opacity: 1; }
   }
   .boss-anim-attack { animation: bossLungeAttack 0.62s cubic-bezier(0.22, 1, 0.36, 1); }
-  .boss-anim-deluxe { animation: bossLungeDeluxe 0.68s cubic-bezier(0.22, 1, 0.36, 1); }
+  .boss-anim-charge-finisher { animation: bossChargeFinisherLunge 0.86s cubic-bezier(0.22, 1, 0.36, 1); }
   .boss-anim-miss { animation: bossWhiffMiss 0.52s ease-out; }
   .boss-anim-blocked { animation: bossBlockedBounce 0.56s ease-out; }
   .boss-anim-hurt-heavy { animation: bossHitHeavy 0.52s ease; }
@@ -836,7 +889,7 @@
           <div style="font-size:11px;color:#67e8f9;font-weight:800;" id="stageBadge">STAGE 1 / 20</div>
           <div id="stageBossSvg"></div>
           <div style="font-weight:900;font-size:15px;color:#fef08a;" id="stageBossName">フロギー・ドット</div>
-          <div style="font-size:11px;color:#e2e8f0;font-style:italic;" id="stageBossQuote">「ケロ…3射合わせて18点出さないと厳しいぞ」</div>
+          <div style="font-size:11px;color:#e2e8f0;font-style:italic;" id="stageBossQuote">「ケロ…3射合計18点出さないと厳しいぞ」</div>
         </div>
 
         <div class="stage-meta">
@@ -845,11 +898,11 @@
             <div class="meta-val" style="color:#fda4af;" id="stageBossHp">68</div>
           </div>
           <div class="meta-box">
-            <div class="meta-label">ボス基準攻撃力</div>
+            <div class="meta-label">ボス基準攻撃力（3T後3倍）</div>
             <div class="meta-val" style="color:#fde047;" id="stageBossAtk">14</div>
           </div>
           <div class="meta-box">
-            <div class="meta-label">3射クリア目安</div>
+            <div class="meta-label">3射クリア目安（超えで守る）</div>
             <div class="meta-val" style="color:#67e8f9;" id="stageTargetHint">3射合計 18点</div>
           </div>
           <div class="meta-box">
@@ -890,6 +943,8 @@
     <div class="ut-box boss-stage-area">
       <div class="shockwave-ring" id="shockwaveRing"></div>
       <div class="shockwave-ring-secondary" id="shockwaveRingSecondary"></div>
+      <div class="finisher-beam-a" id="finisherBeamA"></div>
+      <div class="finisher-beam-b" id="finisherBeamB"></div>
       <div class="barrier-shield-ring" id="barrierShieldRing"></div>
       <div class="heal-aura-ring" id="healAuraRing"></div>
       <div class="slash-beam" id="slashBeam"></div>
@@ -963,7 +1018,7 @@
 </div>
 
 <script>
-const STORAGE_KEY = "better_archery_rpg_20boss_v5";
+const STORAGE_KEY = "better_archery_rpg_20boss_v7";
 const MAX_TURNS = 12;
 
 const CMD_INFO = {
@@ -975,9 +1030,8 @@ const CMD_INFO = {
 
 /*
   20 Individual Bosses:
-  - targetSum: クリア目安となる1エンド(3射)の合計点。これより1点でも低いと削りきれない／耐えきれないシビア設計
-  - baseHp: Lv.1基準の敵HP（目安点数を約3.5〜4.2ターンで削りきる想定）
-  - atk: 1回の被弾でプレイヤーHPの約22〜32%を削る強さ（目安未満だと守る・回復との噛み合わせが必須）
+  - targetSum: クリア目安となる1エンド(3射)の合計点。「守る」は sum > targetSum で成功
+  - 敵はため開始から3ターン後の攻撃ターン（chargeStep: 1 → 2 → 3ターン目に3倍火力で放つ）
 */
 const STAGES = [
   { stage: 1,  name: "フロギー・ドット",       quote: "「ケロ…3射合計18点出さないと厳しいぞ」",         atkQuote: "「ケロロッ！激流スプラッシュ！」",       targetSum: 18, baseHp: 68,  atk: 14, hint: "3射合計 18点" },
@@ -1145,21 +1199,32 @@ const Sound = (() => {
     heal() {
       [523, 659, 784, 1046].forEach((f, i) => seTone(f, 0.09, "triangle", 0.07, i * 0.055));
     },
+    bossCharge() {
+      [220, 277, 330, 440].forEach((f, i) => seTone(f, 0.11, "sawtooth", 0.07, i * 0.07));
+    },
     bossMiss() {
       seTone(340, 0.07, "sine", 0.05, 0);
       seTone(460, 0.09, "sine", 0.05, 0.06);
     },
     bossAttack(isDeluxe) {
       if (isDeluxe) {
-        seTone(68, 0.36, "sawtooth", 0.14, 0);
-        seTone(110, 0.3, "square", 0.11, 0.04);
-        seTone(220, 0.24, "sawtooth", 0.1, 0.1);
-        seTone(58, 0.38, "sawtooth", 0.13, 0.16);
+        seTone(62, 0.4, "sawtooth", 0.15, 0);
+        seTone(98, 0.34, "square", 0.12, 0.04);
+        seTone(196, 0.28, "sawtooth", 0.11, 0.1);
+        seTone(52, 0.42, "sawtooth", 0.14, 0.16);
       } else {
         seTone(95, 0.28, "sawtooth", 0.12, 0);
         seTone(140, 0.22, "square", 0.09, 0.05);
         seTone(72, 0.32, "sawtooth", 0.11, 0.12);
       }
+    },
+    bossChargeFinisher() {
+      seTone(48, 0.52, "sawtooth", 0.18, 0);
+      seTone(96, 0.42, "sawtooth", 0.15, 0.04);
+      seTone(587.33, 0.11, "square", 0.11, 0.08);
+      seTone(880.00, 0.13, "triangle", 0.12, 0.14);
+      seTone(1174.66, 0.18, "triangle", 0.12, 0.21);
+      seTone(55, 0.55, "sawtooth", 0.18, 0.26);
     },
     win() { [523, 659, 784, 1046].forEach((f, i) => seTone(f, 0.13, "triangle", 0.07, i * 0.09)); },
     lose() { [330, 293, 246, 196].forEach((f, i) => seTone(f, 0.15, "sawtooth", 0.06, i * 0.11)); }
@@ -1247,18 +1312,12 @@ function updateAudioBtns() {
   seBtn.classList.toggle("off", !rootState.seOn);
 }
 
-/*
-  レベルが上がるほどターンが長くなる設計（ただし最大12ターン以内に収まる上限）：
-  - プレイヤーHP: 50 + (lv - 1) * 14
-  - 敵HP倍率: Lv.1で1.00、Lvが1上がるごとに +0.08（最大1.80倍）
-    ※ 目安点数を常に上回るターン数が必要になるよう、最低でも約3.8〜4.4ターン相当のHPを確保し、
-       Lvアップで5〜10ターン前後まで伸びつつ、12ターン上限を超えないよう調整
-*/
+/* レベルが上がるほどHP・敵HPが伸びつつ最大12ターン以内に収まる設計 */
 function calcStats(profile) {
   const lv = Math.max(1, Number(profile.lv) || 1);
-  const hp = 50 + (lv - 1) * 14;
-  const lvHpMult = Math.min(1.8, 1 + (lv - 1) * 0.08);
-  const lvAtkMult = Math.min(1.65, 1 + (lv - 1) * 0.06);
+  const hp = 55 + (lv - 1) * 16;
+  const lvHpMult = Math.min(1.75, 1 + (lv - 1) * 0.075);
+  const lvAtkMult = Math.min(1.6, 1 + (lv - 1) * 0.055);
   return { hp, lvHpMult, lvAtkMult };
 }
 
@@ -1362,8 +1421,8 @@ function renderStageCard(p) {
   document.getElementById("stageBossName").textContent = st.name;
   document.getElementById("stageBossQuote").textContent = st.quote;
   document.getElementById("stageBossHp").textContent = scaledHp;
-  document.getElementById("stageBossAtk").textContent = scaledAtk;
-  document.getElementById("stageTargetHint").textContent = st.hint;
+  document.getElementById("stageBossAtk").textContent = `${scaledAtk}（3T後${scaledAtk * 3}）`;
+  document.getElementById("stageTargetHint").textContent = `${st.hint}（>${st.targetSum}で守る）`;
 
   const unlocked = st.stage <= p.unlockedStage;
   const cleared = p.clearedStages.includes(st.stage);
@@ -1411,15 +1470,21 @@ function clearAllBattleFxClasses() {
   const flash = document.getElementById("fxFlashOverlay");
   const ring = document.getElementById("shockwaveRing");
   const ring2 = document.getElementById("shockwaveRingSecondary");
+  const beamA = document.getElementById("finisherBeamA");
+  const beamB = document.getElementById("finisherBeamB");
   const barrier = document.getElementById("barrierShieldRing");
   const aura = document.getElementById("healAuraRing");
   const slash = document.getElementById("slashBeam");
+  const speech = document.getElementById("battleBossSpeech");
 
   wrap.className = "";
-  inner.classList.remove("shake-ultra", "shake-heavy", "shake-mid", "shake-light");
+  speech.classList.remove("charge-alert");
+  inner.classList.remove("shake-charge-finisher", "shake-heavy", "shake-mid", "shake-light");
   flash.className = "fx-flash-overlay";
   ring.className = "shockwave-ring";
   ring2.className = "shockwave-ring-secondary";
+  beamA.className = "finisher-beam-a";
+  beamB.className = "finisher-beam-b";
   barrier.className = "barrier-shield-ring";
   aura.className = "heal-aura-ring";
   slash.className = "slash-beam";
@@ -1481,12 +1546,20 @@ function startBattle() {
 
   clearAllBattleFxClasses();
   Sound.startBgm();
+  /*
+    chargeStep:
+    0 = 通常
+    1 = ため開始（1ターン目）
+    2 = ため継続（2ターン目）
+    → 3ターン目の攻撃フェーズで3倍火力を発動
+  */
   battle = {
     stageObj: st,
     turn: 1,
     bossHp,
     bossMaxHp: bossHp,
     bossAtk,
+    chargeStep: 0,
     playerHp: stats.hp,
     playerMaxHp: stats.hp,
     fullGuardNext: false,
@@ -1507,7 +1580,7 @@ function startBattle() {
   clearShots();
   syncLowerHalfMode();
   updateBattleHud();
-  setBattleMsg(`* ${st.name} があらわれた！（目安: ${st.hint} / 最大${MAX_TURNS}ターン）\n四隅の「攻撃・守る・回復・逃げる」から1つ選ぼう。`);
+  setBattleMsg(`* ${st.name} があらわれた！（目標: ${st.targetSum}点 / 目標超えで守る）\n四隅の「攻撃・守る・回復・逃げる」から1つ選ぼう。`);
   document.getElementById("battleScreen").classList.add("active");
   document.getElementById("battleScreen").scrollTop = 0;
 }
@@ -1523,7 +1596,10 @@ function selectCmd(cmd) {
   clearShots();
   syncLowerHalfMode();
   renderShotSlots();
-  setBattleMsg(`* 「${CMD_INFO[cmd].label}」を選択！下半分で3射を入力して「確定」を押そう。`);
+  const extra = cmd === "defend"
+    ? `目標${battle.stageObj.targetSum}点「超え」（${battle.stageObj.targetSum + 1}点以上）で完全バリア！`
+    : "下半分で3射を入力して「確定」を押そう。";
+  setBattleMsg(`* 「${CMD_INFO[cmd].label}」を選択！${extra}`);
 }
 
 function selectShotSlot(idx) {
@@ -1596,7 +1672,7 @@ function triggerPlayerAttackFx(sum) {
   slash.className = "slash-beam";
   ring.className = "shockwave-ring";
   flash.className = "fx-flash-overlay";
-  inner.classList.remove("shake-ultra", "shake-heavy", "shake-mid", "shake-light");
+  inner.classList.remove("shake-charge-finisher", "shake-heavy", "shake-mid", "shake-light");
 
   if (sum >= 27) {
     Sound.attackByScore(sum);
@@ -1624,7 +1700,7 @@ function triggerHealFx() {
   const flash = document.getElementById("fxFlashOverlay");
   const aura = document.getElementById("healAuraRing");
   Sound.heal();
-  inner.classList.remove("shake-ultra", "shake-heavy", "shake-mid", "shake-light");
+  inner.classList.remove("shake-charge-finisher", "shake-heavy", "shake-mid", "shake-light");
   flash.className = "fx-flash-overlay";
   aura.className = "heal-aura-ring";
   replayClass(flash, "flash-heal");
@@ -1635,7 +1711,7 @@ function triggerGuardFailFx() {
   const inner = document.getElementById("battleInner");
   const flash = document.getElementById("fxFlashOverlay");
   Sound.guardFail();
-  inner.classList.remove("shake-ultra", "shake-heavy", "shake-mid", "shake-light");
+  inner.classList.remove("shake-charge-finisher", "shake-heavy", "shake-mid", "shake-light");
   replayClass(inner, "shake-mid");
   flash.className = "fx-flash-overlay";
   replayClass(flash, "flash-guard-fail");
@@ -1647,7 +1723,7 @@ function triggerGuardBlockedFx() {
   const flash = document.getElementById("fxFlashOverlay");
   const barrier = document.getElementById("barrierShieldRing");
   Sound.guardBlocked();
-  inner.classList.remove("shake-ultra", "shake-heavy", "shake-mid", "shake-light");
+  inner.classList.remove("shake-charge-finisher", "shake-heavy", "shake-mid", "shake-light");
   replayClass(wrap, "boss-anim-blocked");
   replayClass(inner, "shake-light");
   flash.className = "fx-flash-overlay";
@@ -1656,10 +1732,43 @@ function triggerGuardBlockedFx() {
   replayClass(barrier, "barrier-active");
 }
 
+function triggerBossChargeFx() {
+  const wrap = document.getElementById("battleBossWrap");
+  Sound.bossCharge();
+  wrap.className = "boss-charging";
+}
+
 function triggerBossMissFx() {
   const wrap = document.getElementById("battleBossWrap");
   Sound.bossMiss();
   replayClass(wrap, "boss-anim-miss");
+}
+
+/* ため攻撃が守られなかった時の特別演出 */
+function triggerChargeFinisherFx() {
+  const wrap = document.getElementById("battleBossWrap");
+  const inner = document.getElementById("battleInner");
+  const flash = document.getElementById("fxFlashOverlay");
+  const ring = document.getElementById("shockwaveRing");
+  const ring2 = document.getElementById("shockwaveRingSecondary");
+  const beamA = document.getElementById("finisherBeamA");
+  const beamB = document.getElementById("finisherBeamB");
+
+  Sound.bossChargeFinisher();
+  inner.classList.remove("shake-charge-finisher", "shake-heavy", "shake-mid", "shake-light");
+  flash.className = "fx-flash-overlay";
+  ring.className = "shockwave-ring";
+  ring2.className = "shockwave-ring-secondary";
+  beamA.className = "finisher-beam-a";
+  beamB.className = "finisher-beam-b";
+
+  replayClass(wrap, "boss-anim-charge-finisher");
+  replayClass(inner, "shake-charge-finisher");
+  replayClass(flash, "flash-charge-finisher");
+  replayClass(ring, "shockwave-active");
+  replayClass(ring2, "shockwave-finisher-inner");
+  replayClass(beamA, "finisher-beam-a-active");
+  replayClass(beamB, "finisher-beam-b-active");
 }
 
 function triggerBossAttackFx(isDeluxe) {
@@ -1670,15 +1779,15 @@ function triggerBossAttackFx(isDeluxe) {
   const ring2 = document.getElementById("shockwaveRingSecondary");
 
   Sound.bossAttack(isDeluxe);
-  inner.classList.remove("shake-ultra", "shake-heavy", "shake-mid", "shake-light");
+  inner.classList.remove("shake-charge-finisher", "shake-heavy", "shake-mid", "shake-light");
   flash.className = "fx-flash-overlay";
   ring.className = "shockwave-ring";
   ring2.className = "shockwave-ring-secondary";
 
   if (isDeluxe) {
-    replayClass(wrap, "boss-anim-deluxe");
-    replayClass(inner, "shake-ultra");
-    replayClass(flash, "flash-enemy-deluxe");
+    replayClass(wrap, "boss-anim-charge-finisher");
+    replayClass(inner, "shake-heavy");
+    replayClass(flash, "flash-enemy");
     replayClass(ring, "shockwave-active");
     replayClass(ring2, "shockwave-active");
   } else {
@@ -1689,16 +1798,23 @@ function triggerBossAttackFx(isDeluxe) {
   }
 }
 
-/* 目安より点数が低いと厳しい攻撃力（MISS率5%・乱数0.95〜1.20） */
-function rollEnemyAttack(baseAtk) {
+/* 敵の攻撃判定：3ターン後のため攻撃（3倍火力）と通常攻撃 */
+function rollEnemyTurnAction(baseAtk, isChargedRelease) {
+  if (isChargedRelease) {
+    const tripleAtk = baseAtk * 3;
+    const factor = 0.95 + Math.random() * 0.15;
+    const dmg = Math.max(1, Math.round(tripleAtk * factor));
+    return { mode: "charge_release", isMiss: false, dmg, isDeluxe: true };
+  }
+
   const isMiss = Math.random() < 0.05;
   if (isMiss) {
-    return { isMiss: true, dmg: 0, isDeluxe: false };
+    return { mode: "normal", isMiss: true, dmg: 0, isDeluxe: false };
   }
   const factor = 0.95 + Math.random() * 0.25;
   const dmg = Math.max(1, Math.round(baseAtk * factor));
   const isDeluxe = dmg >= Math.ceil(baseAtk * 1.1);
-  return { isMiss: false, dmg, isDeluxe };
+  return { mode: "normal", isMiss: false, dmg, isDeluxe };
 }
 
 function confirmEnd() {
@@ -1711,26 +1827,26 @@ function confirmEnd() {
   battle.sessionShots.push(...shots);
 
   const sum = shots.reduce((acc, v) => acc + shotNumeric(v), 0);
-  const guardThreshold = Math.max(18, battle.stageObj.targetSum + 1);
+  const targetSum = battle.stageObj.targetSum;
 
   let actionLine = "";
   if (battle.cmd === "attack") {
     const dmg = sum;
     battle.bossHp = Math.max(0, battle.bossHp - dmg);
     triggerPlayerAttackFx(sum);
-    const tierLabel = sum >= battle.stageObj.targetSum + 3 ? "【会心の一射！】" : sum >= battle.stageObj.targetSum ? "【目安達成！】" : "【目安未満…】";
+    const tierLabel = sum > targetSum ? "【目標超え・会心！】" : sum === targetSum ? "【目安ちょうど】" : "【目安未満…】";
     actionLine = `* ${tierLabel}${shots.join("・")}（合計${sum}点）で攻撃！${dmg}ダメージ！`;
   } else if (battle.cmd === "defend") {
-    if (sum >= guardThreshold) {
+    if (sum > targetSum) {
       battle.fullGuardNext = true;
       battle.guardFailedTurn = false;
       Sound.guardReady();
-      actionLine = `* 合計${sum}点（${guardThreshold}点以上）！完全バリア展開！次の敵攻撃を100％弾く！`;
+      actionLine = `* 合計${sum}点（目標${targetSum}点超え）！完全バリア展開！次の敵攻撃を100％弾く！`;
     } else {
       battle.fullGuardNext = false;
       battle.guardFailedTurn = true;
       triggerGuardFailFx();
-      actionLine = `* 合計${sum}点（${guardThreshold}点未満）…防御失敗！！ガードが崩れた！`;
+      actionLine = `* 合計${sum}点（目標${targetSum}点以下）…防御失敗！！ガードが崩れた！`;
     }
   } else if (battle.cmd === "heal") {
     const healAmt = sum * 2;
@@ -1754,40 +1870,104 @@ function confirmEnd() {
 
   setTimeout(() => {
     if (!battle) return;
-    const roll = rollEnemyAttack(battle.bossAtk);
-    let finalDmg = 0;
-    let guardNote = "";
 
-    if (roll.isMiss) {
-      triggerBossMissFx();
-      finalDmg = 0;
-      guardNote = "💨 なんと！敵の攻撃は外れた！（MISS・0ダメージ）";
-    } else if (battle.fullGuardNext) {
-      triggerGuardBlockedFx();
-      finalDmg = 0;
-      guardNote = "🛡 完全バリアが敵の攻撃を弾き返した！（0ダメージ）";
+    const speechEl = document.getElementById("battleBossSpeech");
+    const wrapEl = document.getElementById("battleBossWrap");
+
+    // すでに2ターン溜め終えており（chargeStep === 2）、今回の攻撃フェーズ（3ターン目）で3倍火力を発動
+    if (battle.chargeStep === 2) {
+      battle.chargeStep = 0;
+      wrapEl.classList.remove("boss-charging");
+      speechEl.classList.remove("charge-alert");
+
+      const roll = rollEnemyTurnAction(battle.bossAtk, true);
+      let finalDmg = 0;
+      let guardNote = "";
+
+      if (roll.isMiss) {
+        triggerBossMissFx();
+        finalDmg = 0;
+        guardNote = "💨 なんと！ため攻撃は大きく外れた！（MISS・0ダメージ）";
+      } else if (battle.fullGuardNext) {
+        // 守られた時はいつも通りのバリア演出
+        triggerGuardBlockedFx();
+        finalDmg = 0;
+        guardNote = `🛡 完全バリアが3倍の超火力攻撃（${roll.dmg}）を弾き返した！（0ダメージ）`;
+      } else {
+        // 守られなかった時は特別かっこよいフィニッシャー演出
+        triggerChargeFinisherFx();
+        finalDmg = roll.dmg;
+        guardNote = battle.guardFailedTurn
+          ? `⚡🔥【ため3倍撃・直撃！】防御崩壊で${finalDmg}ダメージの超絶一撃！！`
+          : `⚡🔥【ため3倍撃・直撃！】${finalDmg}ダメージの超絶一撃！！`;
+      }
+
+      battle.fullGuardNext = false;
+      battle.guardFailedTurn = false;
+      battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
+      speechEl.textContent = `「3ターンの力を解放するっ！${battle.stageObj.atkQuote.replace(/「|」/g, "")}」`;
+      updateBattleHud();
+      setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}のため攻撃！${guardNote}`);
+    } else if (battle.chargeStep === 1) {
+      // ため2ターン目（攻撃はせず力をさらに練り上げ、次のターンで3倍攻撃）
+      battle.chargeStep = 2;
+      battle.fullGuardNext = false;
+      battle.guardFailedTurn = false;
+      triggerBossChargeFx();
+      speechEl.classList.add("charge-alert");
+      speechEl.textContent = `「グググ…力が臨界に近づく…次のターンに3倍攻撃が来るぞ！」`;
+      updateBattleHud();
+      setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}はさらに力をためている…！（ため 2/2・次の攻撃ターンで3倍発動！）`);
     } else {
-      triggerBossAttackFx(roll.isDeluxe);
-      finalDmg = roll.dmg;
-      const powerTag = roll.isDeluxe ? "【強撃乱数！】" : "";
-      guardNote = battle.guardFailedTurn
-        ? `${powerTag}防御失敗のため${finalDmg}ダメージをそのまま受けた！`
-        : `${powerTag}${finalDmg}ダメージを受けた！`;
+      // 通常ターン：3ターン後に攻撃できるようにするため、残り2ターン以上ある時に35%でため開始
+      const canStartCharge = battle.turn <= MAX_TURNS - 2 && Math.random() < 0.35;
+      if (canStartCharge) {
+        battle.chargeStep = 1;
+        battle.fullGuardNext = false;
+        battle.guardFailedTurn = false;
+        triggerBossChargeFx();
+        speechEl.classList.add("charge-alert");
+        speechEl.textContent = `「フフフ…力をため始めたぞ…3ターン後に3倍（約${battle.bossAtk * 3}）だ！」`;
+        updateBattleHud();
+        setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}は力をため始めた！（ため 1/2・3ターン後に3倍攻撃！目標${targetSum}点超えの「守る」を用意しよう）`);
+      } else {
+        const roll = rollEnemyTurnAction(battle.bossAtk, false);
+        let finalDmg = 0;
+        let guardNote = "";
+
+        if (roll.isMiss) {
+          triggerBossMissFx();
+          finalDmg = 0;
+          guardNote = "💨 なんと！敵の攻撃は外れた！（MISS・0ダメージ）";
+        } else if (battle.fullGuardNext) {
+          triggerGuardBlockedFx();
+          finalDmg = 0;
+          guardNote = "🛡 完全バリアが敵の攻撃を弾き返した！（0ダメージ）";
+        } else {
+          triggerBossAttackFx(roll.isDeluxe);
+          finalDmg = roll.dmg;
+          const powerTag = roll.isDeluxe ? "【強撃乱数！】" : "";
+          guardNote = battle.guardFailedTurn
+            ? `${powerTag}防御失敗のため${finalDmg}ダメージをそのまま受けた！`
+            : `${powerTag}${finalDmg}ダメージを受けた！`;
+        }
+
+        battle.fullGuardNext = false;
+        battle.guardFailedTurn = false;
+        battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
+        speechEl.classList.remove("charge-alert");
+        speechEl.textContent = roll.isMiss
+          ? "「うわっ、足元がすべった…！」"
+          : roll.isDeluxe
+            ? `「くらえっ！${battle.stageObj.atkQuote.replace(/「|」/g, "")}」`
+            : battle.stageObj.atkQuote;
+        updateBattleHud();
+        setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}の攻撃！${guardNote}`);
+      }
     }
 
-    battle.fullGuardNext = false;
-    battle.guardFailedTurn = false;
-    battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
-    document.getElementById("battleBossSpeech").textContent = roll.isMiss
-      ? "「うわっ、足元がすべった…！」"
-      : roll.isDeluxe
-        ? `「くらえっ！${battle.stageObj.atkQuote.replace(/「|」/g, "")}」`
-        : battle.stageObj.atkQuote;
-    updateBattleHud();
-    setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}の攻撃！${guardNote}`);
-
     if (battle.playerHp <= 0) {
-      setTimeout(() => finishBattle("LOSE"), 650);
+      setTimeout(() => finishBattle("LOSE"), 700);
     } else {
       battle.turn += 1;
       battle.cmd = null;
@@ -1797,7 +1977,7 @@ function confirmEnd() {
       syncLowerHalfMode();
       renderShotSlots();
     }
-  }, 650);
+  }, 700);
 }
 
 function updateBattleHud() {
@@ -1812,7 +1992,11 @@ function updateBattleHud() {
   document.getElementById("battlePlayerHpText").textContent = `HP ${battle.playerHp} / ${battle.playerMaxHp}`;
   document.getElementById("battlePlayerHpBar").style.width = `${playerPct}%`;
 
-  document.getElementById("battleDefBuff").textContent = battle.fullGuardNext ? "🛡 完全バリア展開中" : "";
+  const buffs = [];
+  if (battle.chargeStep === 1) buffs.push("⚡ ため中(1/2・3T後3倍)");
+  if (battle.chargeStep === 2) buffs.push("🔥 ため臨界(2/2・次3倍!)");
+  if (battle.fullGuardNext) buffs.push("🛡 完全バリア展開中");
+  document.getElementById("battleDefBuff").textContent = buffs.join(" / ");
 }
 
 function finishBattle(outcome, customReason = "") {
@@ -1980,7 +2164,7 @@ function deleteSlot(s) {
 /* Interactive Tutorial */
 const TUT_STEPS = [
   { title: "1/3 ステージ選択とクリア解放", body: "「ステージ」タブで解放済みのステージを選び、「出撃」を押しましょう。クリアすると次のステージが解放されます。", tab: "stage" },
-  { title: "2/3 四隅の手段選択 → 下半分の点数入力", body: "四隅から「攻撃・守る・回復」を選ぶと点数入力画面になります。「逃げる」を押すと今回の記録を消してロビーへ戻ります。", tab: "stage" },
+  { title: "2/3 四隅の手段選択 → 下半分の点数入力", body: "「守る」はクリア目標の点数を超えると成功！敵が「ため」に入ったら3ターン後に3倍攻撃が来るので注意しましょう。", tab: "stage" },
   { title: "3/3 記録とセーブ管理", body: "「記録」タブで過去の射撃スコアを確認でき、上部の「セーブ管理」から3スロットの切替・削除や名前変更ができます。", tab: "logs" }
 ];
 let tutIndex = 0;
