@@ -898,7 +898,7 @@
             <div class="meta-val" style="color:#fda4af;" id="stageBossHp">68</div>
           </div>
           <div class="meta-box">
-            <div class="meta-label">ボス基準攻撃力（3T後3倍）</div>
+            <div class="meta-label">ボス基準攻撃力（4・8Tため）</div>
             <div class="meta-val" style="color:#fde047;" id="stageBossAtk">14</div>
           </div>
           <div class="meta-box">
@@ -1018,8 +1018,9 @@
 </div>
 
 <script>
-const STORAGE_KEY = "better_archery_rpg_20boss_v7";
+const STORAGE_KEY = "better_archery_rpg_20boss_v8";
 const MAX_TURNS = 12;
+const CHARGE_START_TURNS = [4, 8];
 
 const CMD_INFO = {
   attack: { label: "攻撃" },
@@ -1031,7 +1032,7 @@ const CMD_INFO = {
 /*
   20 Individual Bosses:
   - targetSum: クリア目安となる1エンド(3射)の合計点。「守る」は sum > targetSum で成功
-  - 敵はため開始から3ターン後の攻撃ターン（chargeStep: 1 → 2 → 3ターン目に3倍火力で放つ）
+  - 敵は4ターン目と8ターン目でためを開始し、3ターン後の攻撃フェーズ（6ターン目・10ターン目）で3倍火力を放つ
 */
 const STAGES = [
   { stage: 1,  name: "フロギー・ドット",       quote: "「ケロ…3射合計18点出さないと厳しいぞ」",         atkQuote: "「ケロロッ！激流スプラッシュ！」",       targetSum: 18, baseHp: 68,  atk: 14, hint: "3射合計 18点" },
@@ -1421,7 +1422,7 @@ function renderStageCard(p) {
   document.getElementById("stageBossName").textContent = st.name;
   document.getElementById("stageBossQuote").textContent = st.quote;
   document.getElementById("stageBossHp").textContent = scaledHp;
-  document.getElementById("stageBossAtk").textContent = `${scaledAtk}（3T後${scaledAtk * 3}）`;
+  document.getElementById("stageBossAtk").textContent = `${scaledAtk}（4・8Tため）`;
   document.getElementById("stageTargetHint").textContent = `${st.hint}（>${st.targetSum}で守る）`;
 
   const unlocked = st.stage <= p.unlockedStage;
@@ -1549,9 +1550,9 @@ function startBattle() {
   /*
     chargeStep:
     0 = 通常
-    1 = ため開始（1ターン目）
-    2 = ため継続（2ターン目）
-    → 3ターン目の攻撃フェーズで3倍火力を発動
+    1 = ため開始（4・8ターン目に開始）
+    2 = ため継続（5・9ターン目に継続）
+    → 3ターン後の攻撃フェーズ（6・10ターン目）で3倍火力を発動
   */
   battle = {
     stageObj: st,
@@ -1580,7 +1581,7 @@ function startBattle() {
   clearShots();
   syncLowerHalfMode();
   updateBattleHud();
-  setBattleMsg(`* ${st.name} があらわれた！（目標: ${st.targetSum}点 / 目標超えで守る）\n四隅の「攻撃・守る・回復・逃げる」から1つ選ぼう。`);
+  setBattleMsg(`* ${st.name} があらわれた！（目標: ${st.targetSum}点 / 4・8Tでため開始）\n四隅の「攻撃・守る・回復・逃げる」から1つ選ぼう。`);
   document.getElementById("battleScreen").classList.add("active");
   document.getElementById("battleScreen").scrollTop = 0;
 }
@@ -1874,7 +1875,7 @@ function confirmEnd() {
     const speechEl = document.getElementById("battleBossSpeech");
     const wrapEl = document.getElementById("battleBossWrap");
 
-    // すでに2ターン溜め終えており（chargeStep === 2）、今回の攻撃フェーズ（3ターン目）で3倍火力を発動
+    // すでに2ターン溜め終えており（chargeStep === 2）、今回の攻撃フェーズ（3ターン目＝6・10ターン目）で3倍火力を発動
     if (battle.chargeStep === 2) {
       battle.chargeStep = 0;
       wrapEl.classList.remove("boss-charging");
@@ -1889,12 +1890,10 @@ function confirmEnd() {
         finalDmg = 0;
         guardNote = "💨 なんと！ため攻撃は大きく外れた！（MISS・0ダメージ）";
       } else if (battle.fullGuardNext) {
-        // 守られた時はいつも通りのバリア演出
         triggerGuardBlockedFx();
         finalDmg = 0;
         guardNote = `🛡 完全バリアが3倍の超火力攻撃（${roll.dmg}）を弾き返した！（0ダメージ）`;
       } else {
-        // 守られなかった時は特別かっこよいフィニッシャー演出
         triggerChargeFinisherFx();
         finalDmg = roll.dmg;
         guardNote = battle.guardFailedTurn
@@ -1909,7 +1908,7 @@ function confirmEnd() {
       updateBattleHud();
       setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}のため攻撃！${guardNote}`);
     } else if (battle.chargeStep === 1) {
-      // ため2ターン目（攻撃はせず力をさらに練り上げ、次のターンで3倍攻撃）
+      // ため2ターン目（5・9ターン目：攻撃はせず力をさらに練り上げ、次のターンで3倍攻撃）
       battle.chargeStep = 2;
       battle.fullGuardNext = false;
       battle.guardFailedTurn = false;
@@ -1918,52 +1917,49 @@ function confirmEnd() {
       speechEl.textContent = `「グググ…力が臨界に近づく…次のターンに3倍攻撃が来るぞ！」`;
       updateBattleHud();
       setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}はさらに力をためている…！（ため 2/2・次の攻撃ターンで3倍発動！）`);
+    } else if (CHARGE_START_TURNS.includes(battle.turn)) {
+      // 4ターン目・8ターン目でため開始（3ターン後の6・10ターン目に3倍攻撃）
+      battle.chargeStep = 1;
+      battle.fullGuardNext = false;
+      battle.guardFailedTurn = false;
+      triggerBossChargeFx();
+      speechEl.classList.add("charge-alert");
+      speechEl.textContent = `「${battle.turn}ターン目…力をため始めたぞ！3ターン後に3倍（約${battle.bossAtk * 3}）だ！」`;
+      updateBattleHud();
+      setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}は力をため始めた！（ため 1/2・3ターン後に3倍攻撃！目標${targetSum}点超えの「守る」を用意しよう）`);
     } else {
-      // 通常ターン：3ターン後に攻撃できるようにするため、残り2ターン以上ある時に35%でため開始
-      const canStartCharge = battle.turn <= MAX_TURNS - 2 && Math.random() < 0.35;
-      if (canStartCharge) {
-        battle.chargeStep = 1;
-        battle.fullGuardNext = false;
-        battle.guardFailedTurn = false;
-        triggerBossChargeFx();
-        speechEl.classList.add("charge-alert");
-        speechEl.textContent = `「フフフ…力をため始めたぞ…3ターン後に3倍（約${battle.bossAtk * 3}）だ！」`;
-        updateBattleHud();
-        setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}は力をため始めた！（ため 1/2・3ターン後に3倍攻撃！目標${targetSum}点超えの「守る」を用意しよう）`);
+      const roll = rollEnemyTurnAction(battle.bossAtk, false);
+      let finalDmg = 0;
+      let guardNote = "";
+
+      if (roll.isMiss) {
+        triggerBossMissFx();
+        finalDmg = 0;
+        guardNote = "💨 なんと！敵の攻撃は外れた！（MISS・0ダメージ）";
+      } else if (battle.fullGuardNext) {
+        triggerGuardBlockedFx();
+        finalDmg = 0;
+        guardNote = "🛡 完全バリアが敵の攻撃を弾き返した！（0ダメージ）";
       } else {
-        const roll = rollEnemyTurnAction(battle.bossAtk, false);
-        let finalDmg = 0;
-        let guardNote = "";
-
-        if (roll.isMiss) {
-          triggerBossMissFx();
-          finalDmg = 0;
-          guardNote = "💨 なんと！敵の攻撃は外れた！（MISS・0ダメージ）";
-        } else if (battle.fullGuardNext) {
-          triggerGuardBlockedFx();
-          finalDmg = 0;
-          guardNote = "🛡 完全バリアが敵の攻撃を弾き返した！（0ダメージ）";
-        } else {
-          triggerBossAttackFx(roll.isDeluxe);
-          finalDmg = roll.dmg;
-          const powerTag = roll.isDeluxe ? "【強撃乱数！】" : "";
-          guardNote = battle.guardFailedTurn
-            ? `${powerTag}防御失敗のため${finalDmg}ダメージをそのまま受けた！`
-            : `${powerTag}${finalDmg}ダメージを受けた！`;
-        }
-
-        battle.fullGuardNext = false;
-        battle.guardFailedTurn = false;
-        battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
-        speechEl.classList.remove("charge-alert");
-        speechEl.textContent = roll.isMiss
-          ? "「うわっ、足元がすべった…！」"
-          : roll.isDeluxe
-            ? `「くらえっ！${battle.stageObj.atkQuote.replace(/「|」/g, "")}」`
-            : battle.stageObj.atkQuote;
-        updateBattleHud();
-        setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}の攻撃！${guardNote}`);
+        triggerBossAttackFx(roll.isDeluxe);
+        finalDmg = roll.dmg;
+        const powerTag = roll.isDeluxe ? "【強撃乱数！】" : "";
+        guardNote = battle.guardFailedTurn
+          ? `${powerTag}防御失敗のため${finalDmg}ダメージをそのまま受けた！`
+          : `${powerTag}${finalDmg}ダメージを受けた！`;
       }
+
+      battle.fullGuardNext = false;
+      battle.guardFailedTurn = false;
+      battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
+      speechEl.classList.remove("charge-alert");
+      speechEl.textContent = roll.isMiss
+        ? "「うわっ、足元がすべった…！」"
+        : roll.isDeluxe
+          ? `「くらえっ！${battle.stageObj.atkQuote.replace(/「|」/g, "")}」`
+          : battle.stageObj.atkQuote;
+      updateBattleHud();
+      setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}の攻撃！${guardNote}`);
     }
 
     if (battle.playerHp <= 0) {
@@ -2164,7 +2160,7 @@ function deleteSlot(s) {
 /* Interactive Tutorial */
 const TUT_STEPS = [
   { title: "1/3 ステージ選択とクリア解放", body: "「ステージ」タブで解放済みのステージを選び、「出撃」を押しましょう。クリアすると次のステージが解放されます。", tab: "stage" },
-  { title: "2/3 四隅の手段選択 → 下半分の点数入力", body: "「守る」はクリア目標の点数を超えると成功！敵が「ため」に入ったら3ターン後に3倍攻撃が来るので注意しましょう。", tab: "stage" },
+  { title: "2/3 四隅の手段選択 → 下半分の点数入力", body: "「守る」はクリア目標の点数を超えると成功！4・8ターン目に敵が「ため」に入るので3倍攻撃に備えましょう。", tab: "stage" },
   { title: "3/3 記録とセーブ管理", body: "「記録」タブで過去の射撃スコアを確認でき、上部の「セーブ管理」から3スロットの切替・削除や名前変更ができます。", tab: "logs" }
 ];
 let tutIndex = 0;
