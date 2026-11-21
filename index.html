@@ -902,7 +902,7 @@
             <div class="meta-val" style="color:#fde047;" id="stageBossAtk">14</div>
           </div>
           <div class="meta-box">
-            <div class="meta-label">3射クリア目安（超えで守る）</div>
+            <div class="meta-label">3射クリア目安（超え完封/同点70%減）</div>
             <div class="meta-val" style="color:#67e8f9;" id="stageTargetHint">3射合計 18点</div>
           </div>
           <div class="meta-box">
@@ -1018,7 +1018,7 @@
 </div>
 
 <script>
-const STORAGE_KEY = "better_archery_rpg_20boss_v8";
+const STORAGE_KEY = "better_archery_rpg_20boss_v11";
 const MAX_TURNS = 12;
 const CHARGE_START_TURNS = [4, 8];
 
@@ -1031,7 +1031,8 @@ const CMD_INFO = {
 
 /*
   20 Individual Bosses:
-  - targetSum: クリア目安となる1エンド(3射)の合計点。「守る」は sum > targetSum で成功
+  - targetSum: クリア目安となる1エンド(3射)の合計点。
+    「守る」は sum > targetSum で完全バリア（0ダメ）、sum === targetSum で70%軽減（30%被弾・最低1ダメ）、sum < targetSum で失敗
   - 敵は4ターン目と8ターン目でためを開始し、3ターン後の攻撃フェーズ（6ターン目・10ターン目）で3倍火力を放つ
 */
 const STAGES = [
@@ -1423,7 +1424,7 @@ function renderStageCard(p) {
   document.getElementById("stageBossQuote").textContent = st.quote;
   document.getElementById("stageBossHp").textContent = scaledHp;
   document.getElementById("stageBossAtk").textContent = `${scaledAtk}（4・8Tため）`;
-  document.getElementById("stageTargetHint").textContent = `${st.hint}（>${st.targetSum}で守る）`;
+  document.getElementById("stageTargetHint").textContent = `${st.hint}（>${st.targetSum}完封/=${st.targetSum} 70%減）`;
 
   const unlocked = st.stage <= p.unlockedStage;
   const cleared = p.clearedStages.includes(st.stage);
@@ -1464,6 +1465,14 @@ function renderLogsTab(p) {
 
 /* Battle System */
 let battle = null;
+let battleTimer = null;
+
+function clearBattleTimer() {
+  if (battleTimer !== null) {
+    clearTimeout(battleTimer);
+    battleTimer = null;
+  }
+}
 
 function clearAllBattleFxClasses() {
   const wrap = document.getElementById("battleBossWrap");
@@ -1501,6 +1510,7 @@ function buildScorePad() {
 
 function escapeBattleImmediately() {
   if (!battle) return;
+  clearBattleTimer();
   clearAllBattleFxClasses();
   Sound.stopBgm();
   battle = null;
@@ -1545,14 +1555,21 @@ function startBattle() {
   const bossHp = getScaledBossHp(st, p);
   const bossAtk = getScaledBossAtk(st, p);
 
+  clearBattleTimer();
   clearAllBattleFxClasses();
   Sound.startBgm();
+
   /*
     chargeStep:
     0 = 通常
     1 = ため開始（4・8ターン目に開始）
     2 = ため継続（5・9ターン目に継続）
     → 3ターン後の攻撃フェーズ（6・10ターン目）で3倍火力を発動
+
+    guardMode:
+    "none" = ガードなし / 失敗
+    "full" = 完全バリア（目標点超え：ダメージ0）
+    "reduce70" = 70%軽減ガード（目標点と同点：ダメージ70%カット）
   */
   battle = {
     stageObj: st,
@@ -1563,7 +1580,7 @@ function startBattle() {
     chargeStep: 0,
     playerHp: stats.hp,
     playerMaxHp: stats.hp,
-    fullGuardNext: false,
+    guardMode: "none",
     guardFailedTurn: false,
     cmd: null,
     shots: [null, null, null],
@@ -1573,6 +1590,7 @@ function startBattle() {
   };
 
   document.getElementById("battleStageLabel").textContent = `STAGE ${st.stage}`;
+  document.getElementById("battleTurnLabel").textContent = `TURN 1 / ${MAX_TURNS}`;
   document.getElementById("battleBossSvg").innerHTML = renderBossSvg(st.stage, 72);
   document.getElementById("battleBossName").textContent = st.name;
   document.getElementById("battleBossSpeech").textContent = st.quote;
@@ -1581,7 +1599,7 @@ function startBattle() {
   clearShots();
   syncLowerHalfMode();
   updateBattleHud();
-  setBattleMsg(`* ${st.name} があらわれた！（目標: ${st.targetSum}点 / 4・8Tでため開始）\n四隅の「攻撃・守る・回復・逃げる」から1つ選ぼう。`);
+  setBattleMsg(`* ${st.name} があらわれた！（目標: ${st.targetSum}点 / 4・8Tため）\n守るは 目標超えで完封・同点で70%軽減！`);
   document.getElementById("battleScreen").classList.add("active");
   document.getElementById("battleScreen").scrollTop = 0;
 }
@@ -1598,7 +1616,7 @@ function selectCmd(cmd) {
   syncLowerHalfMode();
   renderShotSlots();
   const extra = cmd === "defend"
-    ? `目標${battle.stageObj.targetSum}点「超え」（${battle.stageObj.targetSum + 1}点以上）で完全バリア！`
+    ? `目標${battle.stageObj.targetSum}点超えで完封／同点で70%軽減！`
     : "下半分で3射を入力して「確定」を押そう。";
   setBattleMsg(`* 「${CMD_INFO[cmd].label}」を選択！${extra}`);
 }
@@ -1818,11 +1836,52 @@ function rollEnemyTurnAction(baseAtk, isChargedRelease) {
   return { mode: "normal", isMiss: false, dmg, isDeluxe };
 }
 
+function applyGuardToDamage(rawDmg, guardMode, isChargedRelease) {
+  if (guardMode === "full") {
+    triggerGuardBlockedFx();
+    return {
+      finalDmg: 0,
+      note: isChargedRelease
+        ? `🛡 完全バリアが3倍の超火力攻撃（${rawDmg}）を弾き返した！（0ダメージ）`
+        : "🛡 完全バリアが敵の攻撃を弾き返した！（0ダメージ）"
+    };
+  }
+  if (guardMode === "reduce70") {
+    const reduced = Math.max(1, Math.round(rawDmg * 0.3));
+    triggerGuardBlockedFx();
+    return {
+      finalDmg: reduced,
+      note: isChargedRelease
+        ? `🛡 同点ガード（70%軽減）！3倍撃${rawDmg} → ${reduced}ダメージに抑えた！`
+        : `🛡 同点ガード（70%軽減）！${rawDmg} → ${reduced}ダメージに抑えた！`
+    };
+  }
+  if (isChargedRelease) {
+    triggerChargeFinisherFx();
+    return {
+      finalDmg: rawDmg,
+      note: battle.guardFailedTurn
+        ? `⚡🔥【ため3倍撃・直撃！】防御崩壊で${rawDmg}ダメージの超絶一撃！！`
+        : `⚡🔥【ため3倍撃・直撃！】${rawDmg}ダメージの超絶一撃！！`
+    };
+  }
+  const roll = arguments[3];
+  triggerBossAttackFx(Boolean(roll && roll.isDeluxe));
+  const powerTag = roll && roll.isDeluxe ? "【強撃乱数！】" : "";
+  return {
+    finalDmg: rawDmg,
+    note: battle.guardFailedTurn
+      ? `${powerTag}防御失敗のため${rawDmg}ダメージをそのまま受けた！`
+      : `${powerTag}${rawDmg}ダメージを受けた！`
+  };
+}
+
 function confirmEnd() {
   if (!battle || battle.busy || !battle.cmd || !battle.shots.every((s) => s !== null)) return;
   battle.busy = true;
   document.getElementById("btnConfirmEnd").disabled = true;
   Sound.confirm();
+  clearBattleTimer();
 
   const shots = [...battle.shots];
   battle.sessionShots.push(...shots);
@@ -1835,19 +1894,24 @@ function confirmEnd() {
     const dmg = sum;
     battle.bossHp = Math.max(0, battle.bossHp - dmg);
     triggerPlayerAttackFx(sum);
-    const tierLabel = sum > targetSum ? "【目標超え・会心！】" : sum === targetSum ? "【目安ちょうど】" : "【目安未満…】";
+    const tierLabel = sum > targetSum ? "【目標超え・会心！】" : sum === targetSum ? "【目標ぴったり！】" : "【目安未満…】";
     actionLine = `* ${tierLabel}${shots.join("・")}（合計${sum}点）で攻撃！${dmg}ダメージ！`;
   } else if (battle.cmd === "defend") {
     if (sum > targetSum) {
-      battle.fullGuardNext = true;
+      battle.guardMode = "full";
       battle.guardFailedTurn = false;
       Sound.guardReady();
-      actionLine = `* 合計${sum}点（目標${targetSum}点超え）！完全バリア展開！次の敵攻撃を100％弾く！`;
+      actionLine = `* 合計${sum}点（目標${targetSum}点超え）！完全バリア展開！次の攻撃を0ダメに！`;
+    } else if (sum === targetSum) {
+      battle.guardMode = "reduce70";
+      battle.guardFailedTurn = false;
+      Sound.guardReady();
+      actionLine = `* 合計${sum}点（目標${targetSum}点と同点）！70%軽減ガード展開！次の被ダメ70%カット！`;
     } else {
-      battle.fullGuardNext = false;
+      battle.guardMode = "none";
       battle.guardFailedTurn = true;
       triggerGuardFailFx();
-      actionLine = `* 合計${sum}点（目標${targetSum}点以下）…防御失敗！！ガードが崩れた！`;
+      actionLine = `* 合計${sum}点（目標${targetSum}点未満）…防御失敗！！ガードが崩れた！`;
     }
   } else if (battle.cmd === "heal") {
     const healAmt = sum * 2;
@@ -1860,20 +1924,28 @@ function confirmEnd() {
   setBattleMsg(actionLine);
 
   if (battle.bossHp <= 0) {
-    setTimeout(() => finishBattle("WIN"), 650);
+    battleTimer = setTimeout(() => {
+      battleTimer = null;
+      finishBattle("WIN");
+    }, 650);
     return;
   }
 
   if (battle.turn >= MAX_TURNS) {
-    setTimeout(() => finishBattle("LOSE", "12ターン以内に倒しきれなかった…！"), 650);
+    battleTimer = setTimeout(() => {
+      battleTimer = null;
+      finishBattle("LOSE", "12ターン以内に倒しきれなかった…！");
+    }, 650);
     return;
   }
 
-  setTimeout(() => {
+  battleTimer = setTimeout(() => {
+    battleTimer = null;
     if (!battle) return;
 
     const speechEl = document.getElementById("battleBossSpeech");
     const wrapEl = document.getElementById("battleBossWrap");
+    const activeGuard = battle.guardMode;
 
     // すでに2ターン溜め終えており（chargeStep === 2）、今回の攻撃フェーズ（3ターン目＝6・10ターン目）で3倍火力を発動
     if (battle.chargeStep === 2) {
@@ -1889,19 +1961,13 @@ function confirmEnd() {
         triggerBossMissFx();
         finalDmg = 0;
         guardNote = "💨 なんと！ため攻撃は大きく外れた！（MISS・0ダメージ）";
-      } else if (battle.fullGuardNext) {
-        triggerGuardBlockedFx();
-        finalDmg = 0;
-        guardNote = `🛡 完全バリアが3倍の超火力攻撃（${roll.dmg}）を弾き返した！（0ダメージ）`;
       } else {
-        triggerChargeFinisherFx();
-        finalDmg = roll.dmg;
-        guardNote = battle.guardFailedTurn
-          ? `⚡🔥【ため3倍撃・直撃！】防御崩壊で${finalDmg}ダメージの超絶一撃！！`
-          : `⚡🔥【ため3倍撃・直撃！】${finalDmg}ダメージの超絶一撃！！`;
+        const applied = applyGuardToDamage(roll.dmg, activeGuard, true);
+        finalDmg = applied.finalDmg;
+        guardNote = applied.note;
       }
 
-      battle.fullGuardNext = false;
+      battle.guardMode = "none";
       battle.guardFailedTurn = false;
       battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
       speechEl.textContent = `「3ターンの力を解放するっ！${battle.stageObj.atkQuote.replace(/「|」/g, "")}」`;
@@ -1910,7 +1976,7 @@ function confirmEnd() {
     } else if (battle.chargeStep === 1) {
       // ため2ターン目（5・9ターン目：攻撃はせず力をさらに練り上げ、次のターンで3倍攻撃）
       battle.chargeStep = 2;
-      battle.fullGuardNext = false;
+      battle.guardMode = "none";
       battle.guardFailedTurn = false;
       triggerBossChargeFx();
       speechEl.classList.add("charge-alert");
@@ -1920,13 +1986,13 @@ function confirmEnd() {
     } else if (CHARGE_START_TURNS.includes(battle.turn)) {
       // 4ターン目・8ターン目でため開始（3ターン後の6・10ターン目に3倍攻撃）
       battle.chargeStep = 1;
-      battle.fullGuardNext = false;
+      battle.guardMode = "none";
       battle.guardFailedTurn = false;
       triggerBossChargeFx();
       speechEl.classList.add("charge-alert");
       speechEl.textContent = `「${battle.turn}ターン目…力をため始めたぞ！3ターン後に3倍（約${battle.bossAtk * 3}）だ！」`;
       updateBattleHud();
-      setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}は力をため始めた！（ため 1/2・3ターン後に3倍攻撃！目標${targetSum}点超えの「守る」を用意しよう）`);
+      setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}は力をため始めた！（ため 1/2・3ターン後に3倍攻撃！目標${targetSum}点超え完封/同点70%減を用意しよう）`);
     } else {
       const roll = rollEnemyTurnAction(battle.bossAtk, false);
       let finalDmg = 0;
@@ -1936,20 +2002,13 @@ function confirmEnd() {
         triggerBossMissFx();
         finalDmg = 0;
         guardNote = "💨 なんと！敵の攻撃は外れた！（MISS・0ダメージ）";
-      } else if (battle.fullGuardNext) {
-        triggerGuardBlockedFx();
-        finalDmg = 0;
-        guardNote = "🛡 完全バリアが敵の攻撃を弾き返した！（0ダメージ）";
       } else {
-        triggerBossAttackFx(roll.isDeluxe);
-        finalDmg = roll.dmg;
-        const powerTag = roll.isDeluxe ? "【強撃乱数！】" : "";
-        guardNote = battle.guardFailedTurn
-          ? `${powerTag}防御失敗のため${finalDmg}ダメージをそのまま受けた！`
-          : `${powerTag}${finalDmg}ダメージを受けた！`;
+        const applied = applyGuardToDamage(roll.dmg, activeGuard, false, roll);
+        finalDmg = applied.finalDmg;
+        guardNote = applied.note;
       }
 
-      battle.fullGuardNext = false;
+      battle.guardMode = "none";
       battle.guardFailedTurn = false;
       battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
       speechEl.classList.remove("charge-alert");
@@ -1963,7 +2022,10 @@ function confirmEnd() {
     }
 
     if (battle.playerHp <= 0) {
-      setTimeout(() => finishBattle("LOSE"), 700);
+      battleTimer = setTimeout(() => {
+        battleTimer = null;
+        finishBattle("LOSE");
+      }, 700);
     } else {
       battle.turn += 1;
       battle.cmd = null;
@@ -1991,11 +2053,14 @@ function updateBattleHud() {
   const buffs = [];
   if (battle.chargeStep === 1) buffs.push("⚡ ため中(1/2・3T後3倍)");
   if (battle.chargeStep === 2) buffs.push("🔥 ため臨界(2/2・次3倍!)");
-  if (battle.fullGuardNext) buffs.push("🛡 完全バリア展開中");
+  if (battle.guardMode === "full") buffs.push("🛡 完全バリア展開中");
+  if (battle.guardMode === "reduce70") buffs.push("🛡 70%軽減ガード中");
   document.getElementById("battleDefBuff").textContent = buffs.join(" / ");
 }
 
 function finishBattle(outcome, customReason = "") {
+  if (!battle) return;
+  clearBattleTimer();
   const p = getProfile();
   const st = battle.stageObj;
   const totalPts = battle.sessionShots.reduce((a, b) => a + shotNumeric(b), 0);
@@ -2160,7 +2225,7 @@ function deleteSlot(s) {
 /* Interactive Tutorial */
 const TUT_STEPS = [
   { title: "1/3 ステージ選択とクリア解放", body: "「ステージ」タブで解放済みのステージを選び、「出撃」を押しましょう。クリアすると次のステージが解放されます。", tab: "stage" },
-  { title: "2/3 四隅の手段選択 → 下半分の点数入力", body: "「守る」はクリア目標の点数を超えると成功！4・8ターン目に敵が「ため」に入るので3倍攻撃に備えましょう。", tab: "stage" },
+  { title: "2/3 四隅の手段選択 → 下半分の点数入力", body: "「守る」は目標超えで完封・同点で70%軽減！4・8ターン目に敵が「ため」に入るので3倍攻撃に備えましょう。", tab: "stage" },
   { title: "3/3 記録とセーブ管理", body: "「記録」タブで過去の射撃スコアを確認でき、上部の「セーブ管理」から3スロットの切替・削除や名前変更ができます。", tab: "logs" }
 ];
 let tutIndex = 0;
