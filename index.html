@@ -853,6 +853,7 @@
         <button class="mini-btn" id="btnSe" onclick="toggleSe()">🔊 SE ON</button>
         <button class="mini-btn" onclick="startTutorial()">？ ガイド</button>
         <button class="mini-btn" onclick="openSaveModal()">セーブ管理</button>
+        <button class="mini-btn" onclick="openCommandModal()">コマンド</button>
       </div>
     </div>
     <div class="header-stats">
@@ -1012,13 +1013,13 @@
   </div>
 </div>
 
-<!-- MODAL (NEW REGISTRATION / SAVE MANAGER) -->
+<!-- MODAL (NEW REGISTRATION / SAVE MANAGER / COMMAND) -->
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal-box" id="modalBox"></div>
 </div>
 
 <script>
-const STORAGE_KEY = "better_archery_rpg_20boss_v11";
+const STORAGE_KEY = "better_archery_rpg_20boss_v12";
 const MAX_TURNS = 12;
 const CHARGE_START_TURNS = [4, 8];
 
@@ -1559,18 +1560,6 @@ function startBattle() {
   clearAllBattleFxClasses();
   Sound.startBgm();
 
-  /*
-    chargeStep:
-    0 = 通常
-    1 = ため開始（4・8ターン目に開始）
-    2 = ため継続（5・9ターン目に継続）
-    → 3ターン後の攻撃フェーズ（6・10ターン目）で3倍火力を発動
-
-    guardMode:
-    "none" = ガードなし / 失敗
-    "full" = 完全バリア（目標点超え：ダメージ0）
-    "reduce70" = 70%軽減ガード（目標点と同点：ダメージ70%カット）
-  */
   battle = {
     stageObj: st,
     turn: 1,
@@ -1763,7 +1752,6 @@ function triggerBossMissFx() {
   replayClass(wrap, "boss-anim-miss");
 }
 
-/* ため攻撃が守られなかった時の特別演出 */
 function triggerChargeFinisherFx() {
   const wrap = document.getElementById("battleBossWrap");
   const inner = document.getElementById("battleInner");
@@ -1817,7 +1805,6 @@ function triggerBossAttackFx(isDeluxe) {
   }
 }
 
-/* 敵の攻撃判定：3ターン後のため攻撃（3倍火力）と通常攻撃 */
 function rollEnemyTurnAction(baseAtk, isChargedRelease) {
   if (isChargedRelease) {
     const tripleAtk = baseAtk * 3;
@@ -1836,7 +1823,7 @@ function rollEnemyTurnAction(baseAtk, isChargedRelease) {
   return { mode: "normal", isMiss: false, dmg, isDeluxe };
 }
 
-function applyGuardToDamage(rawDmg, guardMode, isChargedRelease) {
+function applyGuardToDamage(rawDmg, guardMode, isChargedRelease, roll) {
   if (guardMode === "full") {
     triggerGuardBlockedFx();
     return {
@@ -1865,7 +1852,6 @@ function applyGuardToDamage(rawDmg, guardMode, isChargedRelease) {
         : `⚡🔥【ため3倍撃・直撃！】${rawDmg}ダメージの超絶一撃！！`
     };
   }
-  const roll = arguments[3];
   triggerBossAttackFx(Boolean(roll && roll.isDeluxe));
   const powerTag = roll && roll.isDeluxe ? "【強撃乱数！】" : "";
   return {
@@ -1947,7 +1933,6 @@ function confirmEnd() {
     const wrapEl = document.getElementById("battleBossWrap");
     const activeGuard = battle.guardMode;
 
-    // すでに2ターン溜め終えており（chargeStep === 2）、今回の攻撃フェーズ（3ターン目＝6・10ターン目）で3倍火力を発動
     if (battle.chargeStep === 2) {
       battle.chargeStep = 0;
       wrapEl.classList.remove("boss-charging");
@@ -1962,7 +1947,7 @@ function confirmEnd() {
         finalDmg = 0;
         guardNote = "💨 なんと！ため攻撃は大きく外れた！（MISS・0ダメージ）";
       } else {
-        const applied = applyGuardToDamage(roll.dmg, activeGuard, true);
+        const applied = applyGuardToDamage(roll.dmg, activeGuard, true, roll);
         finalDmg = applied.finalDmg;
         guardNote = applied.note;
       }
@@ -1974,7 +1959,6 @@ function confirmEnd() {
       updateBattleHud();
       setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}のため攻撃！${guardNote}`);
     } else if (battle.chargeStep === 1) {
-      // ため2ターン目（5・9ターン目：攻撃はせず力をさらに練り上げ、次のターンで3倍攻撃）
       battle.chargeStep = 2;
       battle.guardMode = "none";
       battle.guardFailedTurn = false;
@@ -1984,7 +1968,6 @@ function confirmEnd() {
       updateBattleHud();
       setBattleMsg(`${actionLine}\n* ${battle.stageObj.name}はさらに力をためている…！（ため 2/2・次の攻撃ターンで3倍発動！）`);
     } else if (CHARGE_START_TURNS.includes(battle.turn)) {
-      // 4ターン目・8ターン目でため開始（3ターン後の6・10ターン目に3倍攻撃）
       battle.chargeStep = 1;
       battle.guardMode = "none";
       battle.guardFailedTurn = false;
@@ -2105,6 +2088,126 @@ function finishBattle(outcome, customReason = "") {
   document.getElementById("battleScreen").classList.remove("active");
   refreshAll();
   alert((won ? `Stage ${st.stage} 勝利！（${turnsUsed}ターン）` : `Stage ${st.stage} 敗北…（${turnsUsed}ターン）`) + nextMsg);
+}
+
+/* Command Score Input Modal (Hidden Command: M -> 8 -> 7 unlocks all stages) */
+let cmdInputState = {
+  shots: [null, null, null],
+  activeSlot: 0
+};
+
+function openCommandModal() {
+  const p = getProfile();
+  if (!p) return;
+  Sound.tap();
+  cmdInputState = {
+    shots: [null, null, null],
+    activeSlot: 0
+  };
+  const vals = ["X", 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, "M"];
+  const padHtml = vals.map((v) => {
+    const cls = v === "X" ? "x-btn" : v === "M" ? "m-btn" : "";
+    return `<button class="score-btn ${cls}" onclick="cmdInputScore('${v}')">${v}</button>`;
+  }).join("");
+
+  openModal(`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <h3 style="margin:0;color:#fde047;">コマンド入力</h3>
+      <button class="mini-btn" onclick="closeModal()">✕</button>
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px;">
+      3射分の点数を入力して「確定」を押してください。
+    </p>
+    <div class="slots-3" style="margin-bottom:8px;">
+      <button class="shot-slot active-slot" id="cmd-slot-0" onclick="cmdSelectSlot(0)">1射目: -</button>
+      <button class="shot-slot" id="cmd-slot-1" onclick="cmdSelectSlot(1)">2射目: -</button>
+      <button class="shot-slot" id="cmd-slot-2" onclick="cmdSelectSlot(2)">3射目: -</button>
+    </div>
+    <div class="score-pad" style="margin-bottom:8px;">${padHtml}</div>
+    <div class="edit-row">
+      <button class="cmd-mini-btn" onclick="cmdUndoShot()">1つ消す</button>
+      <button class="cmd-mini-btn" onclick="cmdClearShots()">全クリア</button>
+      <button class="confirm-btn" id="btnCmdConfirm" onclick="cmdConfirm()" disabled>確定</button>
+    </div>
+  `);
+  cmdRenderSlots();
+}
+
+function cmdSelectSlot(idx) {
+  Sound.tap();
+  cmdInputState.activeSlot = idx;
+  cmdRenderSlots();
+}
+
+function cmdInputScore(val) {
+  const parsed = val === "X" || val === "M" ? val : Number(val);
+  Sound.score(parsed);
+  cmdInputState.shots[cmdInputState.activeSlot] = parsed;
+  const nextEmpty = cmdInputState.shots.findIndex((s) => s === null);
+  cmdInputState.activeSlot = nextEmpty !== -1 ? nextEmpty : (cmdInputState.activeSlot + 1) % 3;
+  cmdRenderSlots();
+}
+
+function cmdUndoShot() {
+  Sound.tap();
+  for (let i = 2; i >= 0; i--) {
+    if (cmdInputState.shots[i] !== null) {
+      cmdInputState.shots[i] = null;
+      cmdInputState.activeSlot = i;
+      cmdRenderSlots();
+      return;
+    }
+  }
+}
+
+function cmdClearShots() {
+  Sound.tap();
+  cmdInputState.shots = [null, null, null];
+  cmdInputState.activeSlot = 0;
+  cmdRenderSlots();
+}
+
+function cmdRenderSlots() {
+  for (let i = 0; i < 3; i++) {
+    const el = document.getElementById(`cmd-slot-${i}`);
+    if (!el) continue;
+    const v = cmdInputState.shots[i];
+    el.textContent = `${i + 1}射目: ${v === null ? "-" : v}`;
+    el.classList.toggle("active-slot", cmdInputState.activeSlot === i);
+  }
+  const btn = document.getElementById("btnCmdConfirm");
+  if (btn) {
+    btn.disabled = !cmdInputState.shots.every((s) => s !== null);
+  }
+}
+
+function cmdConfirm() {
+  const p = getProfile();
+  if (!p || !cmdInputState.shots.every((s) => s !== null)) return;
+  const shots = [...cmdInputState.shots];
+  Sound.confirm();
+
+  const isUnlockAll = shots[0] === "M" && shots[1] === 8 && shots[2] === 7;
+  closeModal();
+
+  if (isUnlockAll) {
+    p.unlockedStage = 20;
+    Sound.win();
+    refreshAll();
+    alert("全20ステージが解放されました！");
+  } else {
+    const totalPts = shots.reduce((acc, v) => acc + shotNumeric(v), 0);
+    p.logs.unshift({
+      stage: p.selectedStage,
+      result: "CMD",
+      turns: "-",
+      shots,
+      total: totalPts,
+      avg: totalPts.toFixed(1)
+    });
+    refreshAll();
+    alert(`コマンド入力を記録しました：${shots.join(" / ")}（合計 ${totalPts}点）`);
+  }
 }
 
 /* Save Slots & Name Management */
