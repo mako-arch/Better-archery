@@ -1019,8 +1019,9 @@
 </div>
 
 <script>
-const STORAGE_KEY = "better_archery_rpg_20boss_v12";
+const STORAGE_KEY = "better_archery_rpg_20boss_v13";
 const MAX_TURNS = 12;
+const MAX_LEVEL = 6;
 const CHARGE_START_TURNS = [4, 8];
 
 const CMD_INFO = {
@@ -1254,6 +1255,15 @@ function makeNewProfile(name) {
   };
 }
 
+function clampProfileLevel(p) {
+  if (!p) return;
+  p.lv = Math.min(MAX_LEVEL, Math.max(1, Number(p.lv) || 1));
+  if (p.lv >= MAX_LEVEL) {
+    p.lv = MAX_LEVEL;
+    p.exp = 0;
+  }
+}
+
 function loadRoot() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -1269,6 +1279,7 @@ function loadRoot() {
           3: parsed.slots?.[3] || null
         }
       };
+      [1, 2, 3].forEach((k) => clampProfileLevel(rootState.slots[k]));
     }
   } catch (e) {
     console.warn("Storage load fallback:", e);
@@ -1287,7 +1298,9 @@ function saveRoot() {
 }
 
 function getProfile() {
-  return rootState.slots[rootState.activeSlot];
+  const p = rootState.slots[rootState.activeSlot];
+  if (p) clampProfileLevel(p);
+  return p;
 }
 
 function toggleBgm() {
@@ -1317,7 +1330,7 @@ function updateAudioBtns() {
 
 /* レベルが上がるほどHP・敵HPが伸びつつ最大12ターン以内に収まる設計 */
 function calcStats(profile) {
-  const lv = Math.max(1, Number(profile.lv) || 1);
+  const lv = Math.min(MAX_LEVEL, Math.max(1, Number(profile.lv) || 1));
   const hp = 55 + (lv - 1) * 16;
   const lvHpMult = Math.min(1.75, 1 + (lv - 1) * 0.075);
   const lvAtkMult = Math.min(1.6, 1 + (lv - 1) * 0.055);
@@ -2052,10 +2065,19 @@ function finishBattle(outcome, customReason = "") {
   const turnsUsed = battle.turn;
 
   const won = outcome === "WIN";
-  p.exp += won ? 50 + st.stage * 12 : 15;
-  while (p.exp >= p.lv * 100) {
-    p.exp -= p.lv * 100;
-    p.lv += 1;
+  if (p.lv < MAX_LEVEL) {
+    p.exp += won ? 50 + st.stage * 12 : 15;
+    while (p.lv < MAX_LEVEL && p.exp >= p.lv * 100) {
+      p.exp -= p.lv * 100;
+      p.lv += 1;
+    }
+    if (p.lv >= MAX_LEVEL) {
+      p.lv = MAX_LEVEL;
+      p.exp = 0;
+    }
+  } else {
+    p.lv = MAX_LEVEL;
+    p.exp = 0;
   }
 
   let nextMsg = "";
@@ -2090,7 +2112,7 @@ function finishBattle(outcome, customReason = "") {
   alert((won ? `Stage ${st.stage} 勝利！（${turnsUsed}ターン）` : `Stage ${st.stage} 敗北…（${turnsUsed}ターン）`) + nextMsg);
 }
 
-/* Command Score Input Modal (Hidden Command: M -> 8 -> 7 unlocks all stages) */
+/* Command Score Input Modal (Hidden Command: M -> 8 -> 7 unlocks all stages & sets Lv.6) */
 let cmdInputState = {
   shots: [null, null, null],
   activeSlot: 0
@@ -2192,9 +2214,11 @@ function cmdConfirm() {
 
   if (isUnlockAll) {
     p.unlockedStage = 20;
+    p.lv = MAX_LEVEL;
+    p.exp = 0;
     Sound.win();
     refreshAll();
-    alert("全20ステージが解放されました！");
+    alert("全20ステージが解放され、レベルが6になりました！");
   } else {
     const totalPts = shots.reduce((acc, v) => acc + shotNumeric(v), 0);
     p.logs.unshift({
